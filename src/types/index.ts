@@ -8,7 +8,7 @@ export type StatusLaporan =
 
 export type RoleUser = 'admin' | 'petugas';
 export type StatusPetugas = 'Tersedia' | 'Bertugas' | 'Tidak Aktif';
-export type JenisArmada = 'derek' | 'patroli';
+export type JenisArmada = 'derek' | 'patroli' | 'towing' | 'ambulan';
 export type StatusArmada = 'Tersedia' | 'Digunakan' | 'Dalam Perbaikan';
 
 export interface Admin {
@@ -17,6 +17,7 @@ export interface Admin {
   email: string;
   noHp: string;
   role: 'admin';
+  profileImage?: string;
 }
 
 export interface Petugas {
@@ -34,6 +35,7 @@ export interface Armada {
   jenis: JenisArmada;
   nopol: string;
   status: StatusArmada;
+  pos: string;
 }
 
 export interface Laporan {
