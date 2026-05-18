@@ -26,7 +26,8 @@ export interface Petugas {
   email: string;
   noHp: string;
   status: StatusPetugas;
-  tugasSelesai: number;
+  password: string;
+  pos: string;
 }
 
 export interface Armada {
@@ -52,6 +53,7 @@ export interface Laporan {
   // Optional relations
   petugasId?: string;
   armadaId?: string;
+  penugasan?: { petugasId: string, armadaId: string }[];
   catatanPenugasan?: string;
   catatanPenutup?: string;
   fotoBuktiUrl?: string; // mock image
