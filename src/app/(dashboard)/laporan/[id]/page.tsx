@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { mockLaporan, mockPetugas, mockArmada } from "@/data/mockData";
+import { mockLaporan, mockPetugas, mockArmada, mockPenugasan } from "@/data/mockData";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { BadgeStatus } from "@/components/shared/BadgeStatus";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,14 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ArrowLeft, CheckCircle, MapPin, Phone, User, Clock, Image as ImageIcon, XCircle, HardHat, Truck, Zap } from "lucide-react";
 import Link from "next/link";
-import { StatusLaporan, Petugas, Armada } from "@/types";
+import { StatusLaporan, Petugas, Armada, StatusPetugas, Laporan } from "@/types";
 
 export default function LaporanDetailPage() {
   const params = useParams();
   const router = useRouter();
 
   // Real app should fetch this from Context/API. We use local state to simulate updates.
-  const [laporan, setLaporan] = useState(() => mockLaporan.find((l) => l.id === params.id));
+  const [laporan, setLaporan] = useState<Laporan | null>(null);
 
   const [isVerifying, setIsVerifying] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -36,6 +36,18 @@ export default function LaporanDetailPage() {
 
   useEffect(() => {
     setIsMounted(true);
+
+    const savedLaporan = localStorage.getItem("laporan_data");
+    let currentLaporan = mockLaporan.find((l) => l.id === params.id) ?? null;
+    if (savedLaporan) {
+      try {
+        const parsed = JSON.parse(savedLaporan);
+        const found = parsed.find((l: any) => l.id === params.id);
+        if (found) currentLaporan = found;
+      } catch (e) {}
+    }
+    setLaporan(currentLaporan);
+
     const savedPetugas = localStorage.getItem("petugas_data");
     if (savedPetugas) {
       try {
@@ -64,9 +76,8 @@ export default function LaporanDetailPage() {
     }
   }, []);
 
-  if (!isMounted) return null;
-
-  if (!laporan) {
+  if (!isMounted || !laporan) {
+    if (!isMounted) return null;
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <h2 className="text-xl font-semibold">Laporan tidak ditemukan!</h2>
@@ -78,9 +89,26 @@ export default function LaporanDetailPage() {
   }
 
   const handleUpdateStatus = (newStatus: StatusLaporan, additionalUpdates: any = {}) => {
-    // Simulate updating mock data state
+    // Update local state
     const newHistory = [...laporan.riwayat, { status: newStatus, waktu: new Date().toISOString() }];
-    setLaporan({ ...laporan, status: newStatus, riwayat: newHistory, ...additionalUpdates });
+    const updatedLaporan = { ...laporan, status: newStatus, riwayat: newHistory, ...additionalUpdates };
+    setLaporan(updatedLaporan);
+
+    // Persist to localStorage
+    const saved = localStorage.getItem("laporan_data");
+    let allLaporan = [...mockLaporan];
+    if (saved) {
+      try {
+        allLaporan = JSON.parse(saved);
+      } catch {}
+    }
+    const index = allLaporan.findIndex((l) => l.id === updatedLaporan.id);
+    if (index !== -1) {
+      allLaporan[index] = updatedLaporan;
+    } else {
+      allLaporan.push(updatedLaporan);
+    }
+    localStorage.setItem("laporan_data", JSON.stringify(allLaporan));
   };
 
   const handleVerify = () => {
@@ -104,6 +132,38 @@ export default function LaporanDetailPage() {
       armadaId: validUnits[0]?.armadaId,
       catatanPenugasan: catatan,
     });
+
+    // Save Penugasan to localStorage
+    const savedPenugasan = localStorage.getItem("penugasan_data");
+    let allPenugasan = savedPenugasan ? JSON.parse(savedPenugasan) : [...mockPenugasan];
+    
+    const newPenugasanEntries = validUnits.map((u, idx) => ({
+      id: `TUG-${Date.now()}-${idx}`,
+      laporanId: laporan.id,
+      petugasId: u.petugasId,
+      armadaId: u.armadaId,
+      waktuDitugaskan: new Date().toISOString(),
+      status: 'aktif'
+    }));
+
+    allPenugasan = [...allPenugasan, ...newPenugasanEntries];
+    localStorage.setItem("penugasan_data", JSON.stringify(allPenugasan));
+
+    // Update Petugas & Armada statuses
+    const newPetugasData = petugasData.map(p => 
+      validUnits.some(u => u.petugasId === p.id) ? { ...p, status: 'Bertugas' as StatusPetugas } : p
+    );
+    setPetugasData(newPetugasData);
+    localStorage.setItem("petugas_data", JSON.stringify(newPetugasData));
+
+    const newArmadaData = armadaData.map(a => 
+      validUnits.some(u => u.armadaId === a.id) ? { ...a, status: 'Digunakan' as const } : a
+    );
+    setArmadaData(newArmadaData);
+    localStorage.setItem("armada_data", JSON.stringify(newArmadaData));
+
+    // Redirect to penugasan page
+    router.push("/penugasan");
   };
 
   const assignedPetugas = mockPetugas.find((p) => p.id === laporan.petugasId);
@@ -247,15 +307,17 @@ export default function LaporanDetailPage() {
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Penugasan Petugas</h3>
                 <form onSubmit={handleAssign} className="space-y-4">
-                  <div className="space-y-4 border rounded-md p-4 bg-white/50">
+                  <div className="space-y-4 p-5 bg-white/50 border border-gray-100 rounded-xl">
                     {units.map((unit, index) => {
                       const selectedArmadaData = armadaData.find((a) => a.id === unit.armadaId);
                       const availablePetugas = selectedArmadaData ? petugasData.filter((p) => p.status === "Tersedia" && p.pos === selectedArmadaData.pos) : [];
 
                       return (
-                        <div key={index} className="relative space-y-3 pb-4 mb-4 border-b last:border-0 last:mb-0 last:pb-0">
+                        <div key={index} className="relative space-y-4 pb-5 mb-5 border-b border-gray-100 last:border-0 last:mb-0 last:pb-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500">Unit Kendaraan #{index + 1}</span>
+                            <span className="text-sm font-semibold text-yellow-800 bg-yellow-100 px-3 py-1 rounded-md">
+                              Unit Kendaraan #{index + 1}
+                            </span>
                             {units.length > 1 && (
                               <button
                                 type="button"
@@ -264,69 +326,94 @@ export default function LaporanDetailPage() {
                                   newUnits.splice(index, 1);
                                   setUnits(newUnits);
                                 }}
-                                className="text-red-500 hover:text-red-700 text-xs font-medium"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors"
                               >
-                                Hapus
+                                Hapus Unit
                               </button>
                             )}
                           </div>
-                          <div className="space-y-2">
-                            <Label>Pilih Armada (Tersedia)</Label>
-                            <Select
-                              required
-                              value={unit.armadaId}
-                              onValueChange={(val) => {
-                                const newUnits = [...units];
-                                newUnits[index].armadaId = val;
-                                newUnits[index].petugasId = ""; // Reset petugas
-                                setUnits(newUnits);
-                              }}
-                            >
-                              <SelectTrigger className="bg-white">
-                                <SelectValue placeholder="Pilih Armada terdekat..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {armadaData
-                                  .filter((a) => a.status === "Tersedia")
-                                  .map((a) => (
-                                    <SelectItem key={a.id} value={a.id}>
-                                      {a.nama} ({a.nopol} - {a.jenis}) - {a.pos}
+                          
+                          <div className="flex flex-col gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-gray-700">Pilih Armada (Tersedia)</Label>
+                              <Select
+                                required
+                                value={unit.armadaId}
+                                onValueChange={(val) => {
+                                  const newUnits = [...units];
+                                  newUnits[index].armadaId = val ?? "";
+                                  newUnits[index].petugasId = ""; // Reset petugas
+                                  setUnits(newUnits);
+                                }}
+                              >
+                                <SelectTrigger className="bg-white border-gray-200 shadow-sm h-10 w-full">
+                                  {selectedArmadaData ? (
+                                    <span className="truncate flex-1 text-left">{selectedArmadaData.nama}</span>
+                                  ) : (
+                                    <SelectValue placeholder="Pilih Armada terdekat..." />
+                                  )}
+                                </SelectTrigger>
+                                <SelectContent alignItemWithTrigger={false} className="max-w-[400px] max-h-56 overflow-y-auto">
+                                  {armadaData
+                                    .filter((a) => a.status === "Tersedia")
+                                    .map((a) => (
+                                      <SelectItem key={a.id} value={a.id} className="py-2 cursor-pointer">
+                                        <div className="flex flex-col gap-0.5">
+                                          <span className="font-medium text-gray-900">{a.nama}</span>
+                                          <span className="text-xs text-gray-500">
+                                            {a.nopol} • {a.jenis} • {a.pos}
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-gray-700">
+                                Pilih Petugas {selectedArmadaData ? <span className="text-yellow-600 font-medium">(Di {selectedArmadaData.pos})</span> : ""}
+                              </Label>
+                              <Select
+                                required
+                                disabled={!unit.armadaId}
+                                value={unit.petugasId}
+                                onValueChange={(val) => {
+                                  const newUnits = [...units];
+                                  newUnits[index].petugasId = val ?? "";
+                                  setUnits(newUnits);
+                                }}
+                              >
+                                <SelectTrigger className={`bg-white border-gray-200 shadow-sm h-10 ${!unit.armadaId ? "opacity-50 bg-gray-50 cursor-not-allowed" : ""}`}>
+                                  {unit.petugasId ? (
+                                    <span className="truncate flex-1 text-left">{petugasData.find((p) => p.id === unit.petugasId)?.nama}</span>
+                                  ) : (
+                                    <SelectValue placeholder={unit.armadaId ? "Pilih Petugas..." : "Pilih armada terlebih dahulu"} />
+                                  )}
+                                </SelectTrigger>
+                                <SelectContent alignItemWithTrigger={false} className="max-h-56 overflow-y-auto">
+                                  {availablePetugas.map((p) => (
+                                    <SelectItem key={p.id} value={p.id} className="cursor-pointer">
+                                      {p.nama}
                                     </SelectItem>
                                   ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Pilih Petugas {selectedArmadaData ? `(Di ${selectedArmadaData.pos})` : ""}</Label>
-                            <Select
-                              required
-                              disabled={!unit.armadaId}
-                              value={unit.petugasId}
-                              onValueChange={(val) => {
-                                const newUnits = [...units];
-                                newUnits[index].petugasId = val;
-                                setUnits(newUnits);
-                              }}
-                            >
-                              <SelectTrigger className={`bg-white ${!unit.armadaId ? "opacity-50" : ""}`}>
-                                <SelectValue placeholder={unit.armadaId ? "Pilih Petugas..." : "Pilih armada terlebih dahulu"} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availablePetugas.map((p) => (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {p.nama}
-                                  </SelectItem>
-                                ))}
-                                {availablePetugas.length === 0 && unit.armadaId && <div className="p-2 text-sm text-gray-500 text-center">Tidak ada petugas tersedia di pos ini</div>}
-                              </SelectContent>
-                            </Select>
+                                  {availablePetugas.length === 0 && unit.armadaId && (
+                                    <div className="p-3 text-sm text-gray-500 text-center italic">Tidak ada petugas tersedia di pos ini</div>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
 
-                    <Button type="button" variant="outline" className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50 mt-2" onClick={() => setUnits([...units, { armadaId: "", petugasId: "" }])}>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10" 
+                      onClick={() => setUnits([...units, { armadaId: "", petugasId: "" }])}
+                    >
                       + Tambah Unit Lain
                     </Button>
                   </div>

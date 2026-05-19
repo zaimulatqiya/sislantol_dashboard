@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { BadgeStatus } from '@/components/shared/BadgeStatus';
@@ -18,8 +18,32 @@ export default function LaporanPage() {
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Filter Data
-  const filteredData = mockLaporan.filter(item => {
+  const [laporanData, setLaporanData] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const saved = localStorage.getItem("laporan_data");
+    if (saved) {
+      try {
+        setLaporanData(JSON.parse(saved));
+      } catch {
+        setLaporanData([...mockLaporan]);
+      }
+    } else {
+      setLaporanData([...mockLaporan]);
+    }
+  }, []);
+
+  if (!isMounted) return null;
+
+  // Filter Data (Hanya tampilkan yang belum ditugaskan)
+  const filteredData = laporanData.filter(item => {
+    // Sembunyikan laporan yang sudah masuk penugasan (ditugaskan, proses, selesai)
+    if (["ditugaskan", "proses", "selesai"].includes(item.status)) {
+      return false;
+    }
+
     const matchSearch = item.pelaporNama.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'semua' || item.status === statusFilter;
     const matchJenis = jenisFilter === 'semua' || item.jenisKejadian === jenisFilter;
@@ -72,7 +96,7 @@ export default function LaporanPage() {
           />
         </div>
         
-        <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1); }}>
+        <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val ?? "semua"); setPage(1); }}>
           <SelectTrigger className="w-full sm:w-[180px] bg-white">
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
@@ -80,14 +104,11 @@ export default function LaporanPage() {
             <SelectItem value="semua">Semua Status</SelectItem>
             <SelectItem value="menunggu">Menunggu</SelectItem>
             <SelectItem value="diverifikasi">Diverifikasi</SelectItem>
-            <SelectItem value="ditugaskan">Ditugaskan</SelectItem>
-            <SelectItem value="proses">Proses</SelectItem>
-            <SelectItem value="selesai">Selesai</SelectItem>
             <SelectItem value="ditolak">Ditolak</SelectItem>
           </SelectContent>
         </Select>
 
-        <Select value={jenisFilter} onValueChange={(val) => { setJenisFilter(val); setPage(1); }}>
+        <Select value={jenisFilter} onValueChange={(val) => { setJenisFilter(val ?? "semua"); setPage(1); }}>
           <SelectTrigger className="w-full sm:w-[180px] bg-white">
             <SelectValue placeholder="Semua Jenis" />
           </SelectTrigger>
