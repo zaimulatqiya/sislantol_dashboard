@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Eye, Search } from 'lucide-react';
 import { mockLaporan } from '@/data/mockData';
 import Link from 'next/link';
+import { LaporanDetailSheet } from './LaporanDetailSheet';
 
 export default function LaporanPage() {
+  const [selectedLaporanId, setSelectedLaporanId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('semua');
   const [jenisFilter, setJenisFilter] = useState('semua');
@@ -21,8 +23,7 @@ export default function LaporanPage() {
   const [laporanData, setLaporanData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
+  const loadData = () => {
     const saved = localStorage.getItem("laporan_data");
     if (saved) {
       try {
@@ -33,6 +34,11 @@ export default function LaporanPage() {
     } else {
       setLaporanData([...mockLaporan]);
     }
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+    loadData();
   }, []);
 
   if (!isMounted) return null;
@@ -69,11 +75,14 @@ export default function LaporanPage() {
     { 
       header: 'Aksi', 
       cell: (item: any) => (
-        <Link href={`/laporan/${item.id}`}>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-            <Eye className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          onClick={() => setSelectedLaporanId(item.id)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
       ) 
     },
   ];
@@ -130,6 +139,15 @@ export default function LaporanPage() {
           totalPages: totalPages === 0 ? 1 : totalPages,
           onPageChange: setPage
         }}
+      />
+
+      <LaporanDetailSheet 
+        laporanId={selectedLaporanId}
+        open={!!selectedLaporanId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedLaporanId(null);
+        }}
+        onLaporanUpdated={loadData}
       />
     </div>
   );

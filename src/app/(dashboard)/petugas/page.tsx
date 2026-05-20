@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Pencil, Plus, UserX } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Pencil, Plus, UserX, Search } from "lucide-react";
 import { Petugas } from "@/types";
 
 export default function PetugasPage() {
@@ -19,6 +20,8 @@ export default function PetugasPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [data, setData] = useState<Petugas[]>([]);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("semua");
   const itemsPerPage = 5;
 
   const [formData, setFormData] = useState({
@@ -47,7 +50,12 @@ export default function PetugasPage() {
         if (parsed.length !== mockPetugas.length || (parsed.length > 0 && parsed[0].pos === undefined)) {
           setData([...mockPetugas]);
         } else {
-          setData(parsed);
+          // Normalisasi status jika ada data lama yang salah tipe
+          const normalized = parsed.map((p: any) => ({
+            ...p,
+            status: p.status === 'Sedang Bertugas' ? 'Bertugas' : p.status
+          }));
+          setData(normalized);
         }
       } catch {
         setData([...mockPetugas]);
@@ -133,8 +141,14 @@ export default function PetugasPage() {
     setFormData({ nama: "", email: "", password: "", noHp: "", pos: "" });
   };
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const paginatedData = data.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const filteredData = data.filter((item) => {
+    const matchSearch = item.nama.toLowerCase().includes(search.toLowerCase()) || (item.pos || "").toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "semua" || item.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   if (!isMounted) return null; // Mencegah tampilan berkedip sebelum localStorage termuat (Hydration safe)
 
@@ -143,44 +157,67 @@ export default function PetugasPage() {
       <PageHeader
         title="Manajemen Petugas"
         description="Kelola data petugas lapangan."
-        action={
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger render={<Button className="bg-blue-600 hover:bg-blue-700" />}>
-              <Plus className="w-4 h-4 mr-2" /> Tambah Petugas
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Tambah Petugas Baru</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAdd} className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nama">Nama Lengkap</Label>
-                  <Input id="nama" required value={formData.nama} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password Sementara</Label>
-                  <Input id="password" type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="noHp">Nomor HP</Label>
-                  <Input id="noHp" required value={formData.noHp} onChange={(e) => setFormData({ ...formData, noHp: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pos">Pos / Lokasi Standby</Label>
-                  <Input id="pos" required value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Contoh: Satelit" />
-                </div>
-                <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-                  Simpan Petugas
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        }
       />
+
+      <div className="flex flex-col sm:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Cari nama atau pos..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="pl-9 bg-white"
+          />
+        </div>
+
+        <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val ?? 'semua'); setPage(1); }}>
+          <SelectTrigger className="w-full sm:w-[180px] bg-white">
+            <SelectValue placeholder="Semua Status" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="semua">Semua Status</SelectItem>
+            <SelectItem value="Tersedia">Tersedia</SelectItem>
+            <SelectItem value="Bertugas">Bertugas</SelectItem>
+            <SelectItem value="Tidak Aktif">Tidak Aktif</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger render={<Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 shrink-0" />}>
+            <Plus className="w-4 h-4 mr-2" /> Tambah Petugas
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Tambah Petugas Baru</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAdd} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="nama">Nama Lengkap</Label>
+                <Input id="nama" required value={formData.nama} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password Sementara</Label>
+                <Input id="password" type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="noHp">Nomor HP</Label>
+                <Input id="noHp" required value={formData.noHp} onChange={(e) => setFormData({ ...formData, noHp: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pos">Pos / Lokasi Standby</Label>
+                <Input id="pos" required value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Contoh: Satelit" />
+              </div>
+              <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+                Simpan Petugas
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <DataTable
         columns={columns}

@@ -36,7 +36,7 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
           <TableHeader className="bg-transparent border-b border-gray-100">
             <TableRow className="hover:bg-transparent border-none">
               {columns.map((col, i) => (
-                <TableHead key={i} className="font-semibold text-gray-500 py-5">
+                <TableHead key={i} className="font-semibold text-gray-500 py-5 first:pl-6 last:pr-6">
                   {col.header}
                 </TableHead>
               ))}
@@ -53,7 +53,7 @@ export function DataTable<T>({ columns, data, pagination }: DataTableProps<T>) {
               data.map((item, i) => (
                 <TableRow key={i} className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-none">
                   {columns.map((col, j) => (
-                    <TableCell key={j} className="py-4 text-gray-900 font-medium">
+                    <TableCell key={j} className="py-4 text-gray-900 font-medium first:pl-6 last:pr-6">
                       {col.cell 
                         ? col.cell(item) 
                         : col.accessorKey ? String(item[col.accessorKey]) : null}

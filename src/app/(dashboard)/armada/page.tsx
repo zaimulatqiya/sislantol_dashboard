@@ -10,9 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Pencil, Plus, Trash2, Filter } from "lucide-react";
+import { Pencil, Plus, Trash2, Search } from "lucide-react";
 import { Armada, JenisArmada } from "@/types";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function ArmadaPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -21,6 +20,7 @@ export default function ArmadaPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [data, setData] = useState<Armada[]>([]);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const itemsPerPage = 5;
   const [jenisFilter, setJenisFilter] = useState("semua");
   const [statusFilter, setStatusFilter] = useState("semua");
@@ -143,9 +143,12 @@ export default function ArmadaPage() {
 
   // Filter Data
   const filteredData = data.filter((item) => {
+    const matchSearch = item.nama.toLowerCase().includes(search.toLowerCase()) || 
+                        item.nopol.toLowerCase().includes(search.toLowerCase()) || 
+                        (item.pos || "").toLowerCase().includes(search.toLowerCase());
     const matchJenis = jenisFilter === "semua" || item.jenis === jenisFilter;
     const matchStatus = statusFilter === "semua" || item.status === statusFilter;
-    return matchJenis && matchStatus;
+    return matchSearch && matchJenis && matchStatus;
   });
 
   // Pagination
@@ -159,107 +162,98 @@ export default function ArmadaPage() {
       <PageHeader
         title="Manajemen Armada"
         description="Kelola kendaraan derek dan patroli."
-        action={
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Popover>
-              <PopoverTrigger render={<Button variant="outline" className="bg-white hover:bg-gray-50 border-gray-200" />}>
-                <Filter className="w-4 h-4 mr-2 text-gray-500" /> Filter
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4" align="end">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm leading-none">Filter Armada</h4>
-                    <p className="text-sm text-gray-500">Sesuaikan tampilan data armada.</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-500 uppercase tracking-wider">Jenis Armada</Label>
-                    <Select
-                      value={jenisFilter}
-                      onValueChange={(val) => {
-                        setJenisFilter(val);
-                        setPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Semua Jenis" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="semua">Semua Jenis</SelectItem>
-                        <SelectItem value="derek">Derek</SelectItem>
-                        <SelectItem value="patroli">Patroli</SelectItem>
-                        <SelectItem value="towing">Towing</SelectItem>
-                        <SelectItem value="ambulan">Mobil Ambulan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-gray-500 uppercase tracking-wider">Status Armada</Label>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(val) => {
-                        setStatusFilter(val);
-                        setPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Semua Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="semua">Semua Status</SelectItem>
-                        <SelectItem value="Tersedia">Tersedia</SelectItem>
-                        <SelectItem value="Digunakan">Digunakan</SelectItem>
-                        <SelectItem value="Dalam Perbaikan">Dalam Perbaikan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-              <DialogTrigger render={<Button className="bg-blue-600 hover:bg-blue-700" />}>
-                <Plus className="w-4 h-4 mr-2" /> Tambah Armada
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Tambah Armada Baru</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAdd} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nama">Nama Armada</Label>
-                    <Input id="nama" required value={formData.nama} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} placeholder="Contoh: Derek Besar 03" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="jenis">Jenis</Label>
-                    <Select value={formData.jenis} onValueChange={(val: JenisArmada) => setFormData({ ...formData, jenis: val })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih Jenis" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="derek">Derek</SelectItem>
-                        <SelectItem value="patroli">Patroli</SelectItem>
-                        <SelectItem value="towing">Towing</SelectItem>
-                        <SelectItem value="ambulan">Mobil Ambulan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nopol">Nomor Polisi</Label>
-                    <Input id="nopol" required value={formData.nopol} onChange={(e) => setFormData({ ...formData, nopol: e.target.value })} placeholder="Contoh: L 1234 AB" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pos">Pos</Label>
-                    <Input id="pos" required value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Contoh: Pos 1 Waru" />
-                  </div>
-                  <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-                    Simpan Armada
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        }
       />
+
+      <div className="flex flex-col lg:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input 
+            placeholder="Cari nama, nopol, atau pos..." 
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="pl-9 bg-white"
+          />
+        </div>
+
+        <Select
+          value={jenisFilter}
+          onValueChange={(val) => {
+            setJenisFilter(val ?? "semua");
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full lg:w-[160px] bg-white">
+            <SelectValue placeholder="Semua Jenis" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="semua">Semua Jenis</SelectItem>
+            <SelectItem value="derek">Derek</SelectItem>
+            <SelectItem value="patroli">Patroli</SelectItem>
+            <SelectItem value="towing">Towing</SelectItem>
+            <SelectItem value="ambulan">Mobil Ambulan</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={statusFilter}
+          onValueChange={(val) => {
+            setStatusFilter(val ?? "semua");
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full lg:w-[160px] bg-white">
+            <SelectValue placeholder="Semua Status" />
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            <SelectItem value="semua">Semua Status</SelectItem>
+            <SelectItem value="Tersedia">Tersedia</SelectItem>
+            <SelectItem value="Digunakan">Digunakan</SelectItem>
+            <SelectItem value="Dalam Perbaikan">Dalam Perbaikan</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger render={<Button className="w-full lg:w-auto shrink-0 bg-blue-600 hover:bg-blue-700" />}>
+            <Plus className="w-4 h-4 mr-2" /> Tambah Armada
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Tambah Armada Baru</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAdd} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="nama">Nama Armada</Label>
+                <Input id="nama" required value={formData.nama} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} placeholder="Contoh: Derek Besar 03" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="jenis">Jenis</Label>
+                <Select value={formData.jenis} onValueChange={(val: JenisArmada) => setFormData({ ...formData, jenis: val })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Jenis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="derek">Derek</SelectItem>
+                    <SelectItem value="patroli">Patroli</SelectItem>
+                    <SelectItem value="towing">Towing</SelectItem>
+                    <SelectItem value="ambulan">Mobil Ambulan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nopol">Nomor Polisi</Label>
+                <Input id="nopol" required value={formData.nopol} onChange={(e) => setFormData({ ...formData, nopol: e.target.value })} placeholder="Contoh: L 1234 AB" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pos">Pos</Label>
+                <Input id="pos" required value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Contoh: Pos 1 Waru" />
+              </div>
+              <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+                Simpan Armada
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <DataTable
         columns={columns}

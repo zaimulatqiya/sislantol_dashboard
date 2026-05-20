@@ -6,10 +6,10 @@ import { BadgeStatus } from '@/components/shared/BadgeStatus';
 import { mockPenugasan, mockLaporan, mockPetugas, mockArmada } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Eye, Search } from 'lucide-react';
-import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
+import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
 
 export default function PenugasanPage() {
   const [page, setPage] = useState(1);
@@ -20,10 +20,9 @@ export default function PenugasanPage() {
   
   const [penugasanData, setPenugasanData] = useState<any[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [selectedLaporanId, setSelectedLaporanId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-    
+  const loadData = () => {
     const savedPenugasan = localStorage.getItem("penugasan_data");
     let allPenugasan = savedPenugasan ? JSON.parse(savedPenugasan) : [...mockPenugasan];
     
@@ -50,6 +49,11 @@ export default function PenugasanPage() {
     enrichedList.sort((a: any, b: any) => new Date(b.waktuDitugaskan).getTime() - new Date(a.waktuDitugaskan).getTime());
     
     setPenugasanData(enrichedList);
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+    loadData();
   }, []);
 
   if (!isMounted) return null;
@@ -85,11 +89,14 @@ export default function PenugasanPage() {
     { 
       header: 'Aksi', 
       cell: (item: any) => (
-        <Link href={`/laporan/${item.laporanId}`}>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-            <Eye className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          onClick={() => setSelectedLaporanId(item.laporanId)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
       ) 
     },
   ];
@@ -146,6 +153,15 @@ export default function PenugasanPage() {
           totalPages: totalPages === 0 ? 1 : totalPages,
           onPageChange: setPage
         }}
+      />
+
+      <LaporanDetailSheet 
+        laporanId={selectedLaporanId}
+        open={!!selectedLaporanId}
+        onOpenChange={(open) => {
+          if (!open) setSelectedLaporanId(null);
+        }}
+        onLaporanUpdated={loadData}
       />
     </div>
   );

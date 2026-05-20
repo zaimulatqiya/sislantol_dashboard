@@ -170,5 +170,32 @@ export const mockLaporan: Laporan[] = [
       { status: 'proses', waktu: new Date(BASE_TIME - 1000 * 60 * 60 * 46).toISOString() },
       { status: 'selesai', waktu: new Date(BASE_TIME - 1000 * 60 * 60 * 45).toISOString() }
     ]
+  },
+  {
+    id: 'LAP-011',
+    pelaporNama: 'Budi Santoso',
+    pelaporNoHp: '081234567890',
+    jenisKejadian: 'kecelakaan',
+    lokasi: 'KM 25+400 A',
+    deskripsi: 'Mobil terserempet truk dan butuh bantuan segera.',
+    status: 'menunggu',
+    createdAt: new Date(BASE_TIME - 1000 * 60 * 2).toISOString(),
+    updatedAt: new Date(BASE_TIME - 1000 * 60 * 2).toISOString(),
+    riwayat: [{ status: 'menunggu', waktu: new Date(BASE_TIME - 1000 * 60 * 2).toISOString() }]
+  },
+  {
+    id: 'LAP-012',
+    pelaporNama: 'Sari Ayu',
+    pelaporNoHp: '085678901234',
+    jenisKejadian: 'mogok',
+    lokasi: 'KM 14+800 B',
+    deskripsi: 'Ban kempes, butuh bantuan untuk ganti ban serep.',
+    status: 'diverifikasi',
+    createdAt: new Date(BASE_TIME - 1000 * 60 * 30).toISOString(),
+    updatedAt: new Date(BASE_TIME - 1000 * 60 * 10).toISOString(),
+    riwayat: [
+      { status: 'menunggu', waktu: new Date(BASE_TIME - 1000 * 60 * 30).toISOString() },
+      { status: 'diverifikasi', waktu: new Date(BASE_TIME - 1000 * 60 * 10).toISOString(), keterangan: 'Telah dikonfirmasi via telepon, lokasi valid.' }
+    ]
   }
 ];
