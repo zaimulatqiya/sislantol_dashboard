@@ -41,7 +41,10 @@ export function Navbar() {
             )}
           </Button>
 
-          <Button className="rounded-full bg-black text-white hover:bg-gray-800 px-6 font-semibold">
+          <Button 
+            className="rounded-full bg-black text-white hover:bg-gray-800 px-6 font-semibold cursor-pointer"
+            onClick={() => window.open('/', '_blank')}
+          >
             Open Site
           </Button>
         </div>
