@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CheckCircle, MapPin, Phone, User, Clock, Image as ImageIcon, XCircle, HardHat, Truck, Zap, X } from "lucide-react";
 import { StatusLaporan, Petugas, Armada, StatusPetugas, Laporan } from "@/types";
@@ -48,8 +49,12 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
       try {
         const parsed = JSON.parse(savedLaporan);
         const found = parsed.find((l: any) => l.id === laporanId);
-        if (found) currentLaporan = found;
-      } catch (e) {}
+        if (found && currentLaporan) {
+          currentLaporan = { ...currentLaporan, ...found };
+        } else if (found) {
+          currentLaporan = found;
+        }
+      } catch (e) { }
     }
     setLaporan(currentLaporan);
 
@@ -85,7 +90,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
 
   const handleUpdateStatus = (newStatus: StatusLaporan, additionalUpdates: any = {}) => {
     if (!laporan) return;
-    
+
     const newHistory = [...laporan.riwayat, { status: newStatus, waktu: new Date().toISOString() }];
     const updatedLaporan = { ...laporan, status: newStatus, riwayat: newHistory, ...additionalUpdates };
     setLaporan(updatedLaporan);
@@ -95,7 +100,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
     if (saved) {
       try {
         allLaporan = JSON.parse(saved);
-      } catch {}
+      } catch { }
     }
     const index = allLaporan.findIndex((l) => l.id === updatedLaporan.id);
     if (index !== -1) {
@@ -104,7 +109,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
       allLaporan.push(updatedLaporan);
     }
     localStorage.setItem("laporan_data", JSON.stringify(allLaporan));
-    
+
     if (onLaporanUpdated) {
       onLaporanUpdated();
     }
@@ -123,7 +128,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
   const handleAssign = (e: React.FormEvent) => {
     e.preventDefault();
     if (!laporan) return;
-    
+
     const validUnits = units.filter((u) => u.armadaId && u.petugasId);
     if (validUnits.length === 0) return;
 
@@ -136,7 +141,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
 
     const savedPenugasan = localStorage.getItem("penugasan_data");
     let allPenugasan = savedPenugasan ? JSON.parse(savedPenugasan) : [...mockPenugasan];
-    
+
     const newPenugasanEntries = validUnits.map((u, idx) => ({
       id: `TUG-${Date.now()}-${idx}`,
       laporanId: laporan.id,
@@ -149,13 +154,13 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
     allPenugasan = [...allPenugasan, ...newPenugasanEntries];
     localStorage.setItem("penugasan_data", JSON.stringify(allPenugasan));
 
-    const newPetugasData = petugasData.map(p => 
+    const newPetugasData = petugasData.map(p =>
       validUnits.some(u => u.petugasId === p.id) ? { ...p, status: 'Bertugas' as StatusPetugas } : p
     );
     setPetugasData(newPetugasData);
     localStorage.setItem("petugas_data", JSON.stringify(newPetugasData));
 
-    const newArmadaData = armadaData.map(a => 
+    const newArmadaData = armadaData.map(a =>
       validUnits.some(u => u.armadaId === a.id) ? { ...a, status: 'Digunakan' as const } : a
     );
     setArmadaData(newArmadaData);
@@ -171,10 +176,10 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
         {laporan ? (
           <div className="flex flex-col h-full bg-white">
             <SheetHeader className="p-4 sm:p-6 border-b border-gray-100 bg-white sticky top-0 z-10 flex flex-row items-start sm:items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => onOpenChange(false)} 
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
                 className="shrink-0 -ml-2 rounded-full hover:bg-gray-100 mt-1 sm:mt-0"
               >
                 <X className="w-5 h-5 text-gray-600" />
@@ -232,6 +237,36 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
                         <div className="text-sm text-gray-500 mb-1">Deskripsi</div>
                         <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-100">{laporan.deskripsi}</p>
                       </div>
+
+                      {laporan.fotoKejadianUrls && laporan.fotoKejadianUrls.length > 0 && (
+                        <div className="sm:col-span-2">
+                          <div className="text-sm text-gray-500 mb-2 flex items-center gap-1.5">
+                            <ImageIcon className="w-4 h-4" /> Foto Kejadian ({laporan.fotoKejadianUrls.length})
+                          </div>
+                          <div className="flex flex-wrap gap-3">
+                            {laporan.fotoKejadianUrls.map((url, idx) => (
+                              <Dialog key={idx}>
+                                <DialogTrigger className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all p-0 bg-gray-100 focus:outline-none flex items-center justify-center shrink-0">
+                                  <img src={url} alt={`Foto Kejadian ${idx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-5xl w-[95vw] bg-transparent border-none shadow-none ring-0 p-0" showCloseButton={false}>
+                                  <DialogTitle className="sr-only">Preview Foto Kejadian {idx + 1}</DialogTitle>
+
+                                  {/* Tombol Close Custom yang Jelas */}
+                                  <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group">
+                                    <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                    <span className="text-sm font-semibold tracking-wide pr-1">Tutup Preview</span>
+                                  </DialogClose>
+
+                                  <div className="relative w-full h-[90vh] flex items-center justify-center">
+                                    <img src={url} alt={`Preview Foto Kejadian ${idx + 1}`} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl ring-1 ring-white/20" />
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -284,7 +319,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
                                     </button>
                                   )}
                                 </div>
-                                
+
                                 <div className="flex flex-col gap-4">
                                   <div className="space-y-2">
                                     <Label className="text-gray-700">Pilih Armada (Tersedia)</Label>
@@ -360,10 +395,10 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onLaporanUpd
                             );
                           })}
 
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10" 
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10"
                             onClick={() => setUnits([...units, { armadaId: "", petugasId: "" }])}
                           >
                             + Tambah Unit Lain

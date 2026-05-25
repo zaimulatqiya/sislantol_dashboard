@@ -83,7 +83,7 @@ CREATE TABLE public.laporan (
                  CHECK (jenis_kejadian IN ('mogok','kecelakaan','hambatan','lainnya')),
   lokasi         VARCHAR(255) NOT NULL,
   deskripsi      TEXT,
-  foto_url       VARCHAR(500),
+  foto_urls      TEXT[],        -- array URL foto kejadian (multiple foto)
   status         VARCHAR(20) DEFAULT 'menunggu'
                  CHECK (status IN ('menunggu','diverifikasi','ditugaskan',
                                    'proses','selesai','ditolak')),

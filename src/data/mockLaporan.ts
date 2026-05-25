@@ -10,6 +10,10 @@ export const mockLaporan: Laporan[] = [
     jenisKejadian: 'mogok',
     lokasi: 'KM 14+200 A (Sby-Gempol)',
     deskripsi: 'Mobil mogok di bahu jalan, mesin tiba-tiba mati tidak bisa distarter lagi.',
+    fotoKejadianUrls: [
+      'https://images.unsplash.com/photo-1563728923-38dd0a3d4f13?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?q=80&w=800&auto=format&fit=crop'
+    ],
     status: 'menunggu',
     createdAt: new Date(BASE_TIME - 1000 * 60 * 15).toISOString(), // 15 mins ago
     updatedAt: new Date(BASE_TIME - 1000 * 60 * 15).toISOString(),
@@ -22,6 +26,11 @@ export const mockLaporan: Laporan[] = [
     jenisKejadian: 'kecelakaan',
     lokasi: 'KM 20+500 B (Gempol-Sby)',
     deskripsi: 'Kecelakaan beruntun melibatkan 2 mobil dan 1 truk. Arus lalu lintas tersendat.',
+    fotoKejadianUrls: [
+      'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1505628346881-b72b27e84530?q=80&w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=800&auto=format&fit=crop'
+    ],
     status: 'diverifikasi',
     createdAt: new Date(BASE_TIME - 1000 * 60 * 60).toISOString(),
     updatedAt: new Date(BASE_TIME - 1000 * 60 * 30).toISOString(),

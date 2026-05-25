@@ -56,6 +56,7 @@ export interface Laporan {
   penugasan?: { petugasId: string, armadaId: string }[];
   catatanPenugasan?: string;
   catatanPenutup?: string;
+  fotoKejadianUrls?: string[]; // foto-foto dari pelapor
   fotoBuktiUrl?: string; // mock image
   alasanDitolak?: string;
   

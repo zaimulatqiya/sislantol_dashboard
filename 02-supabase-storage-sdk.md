@@ -139,7 +139,7 @@ interface Laporan {
   jenis_kejadian: 'mogok' | 'kecelakaan' | 'hambatan' | 'lainnya';
   lokasi: string;
   deskripsi: string;
-  foto_url: string | null;
+  foto_urls: string[] | null;  // array URL foto kejadian (multiple)
   status: string;
   created_at: string;
   updated_at: string;
@@ -245,7 +245,7 @@ export default function DashboardPage() {
 
 ---
 
-## 5. Flutter: Upload Foto & Update Penugasan
+## 5. Flutter: Upload Foto Kejadian (Pengguna Jalan)
 
 ### Setup di `pubspec.yaml`
 
@@ -275,7 +275,7 @@ Future<void> main() async {
 final supabase = Supabase.instance.client;
 ```
 
-### Fungsi: Upload Foto + Selesaikan Penugasan
+### Fungsi: Upload Multiple Foto Kejadian + Buat Laporan
 
 ```dart
 import 'dart:io';
@@ -284,6 +284,95 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final supabase = Supabase.instance.client;
 
+/// Pilih beberapa foto, upload ke storage, lalu buat laporan baru
+Future<void> buatLaporanDenganFoto({
+  required String pelaporNama,
+  required String pelaporNoHp,
+  required String jenisKejadian,
+  required String lokasi,
+  required String deskripsi,
+}) async {
+  // 1. Pilih multiple foto dari galeri
+  final picker = ImagePicker();
+  final List<XFile> fotos = await picker.pickMultiImage(
+    maxWidth: 1200,
+    imageQuality: 80,
+  );
+
+  if (fotos.isEmpty) return; // User batal
+
+  // 2. Buat laporan dulu untuk dapatkan ID
+  final response = await supabase.from('laporan').insert({
+    'pelapor_nama': pelaporNama,
+    'pelapor_no_hp': pelaporNoHp,
+    'jenis_kejadian': jenisKejadian,
+    'lokasi': lokasi,
+    'deskripsi': deskripsi,
+    'status': 'menunggu',
+  }).select('id').single();
+
+  final laporanId = response['id'];
+
+  // 3. Upload semua foto ke Storage
+  final List<String> fotoUrls = [];
+
+  for (int i = 0; i < fotos.length; i++) {
+    final file = File(fotos[i].path);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final filePath = 'laporan-$laporanId/foto-$timestamp-$i.jpg';
+
+    await supabase.storage
+        .from('bukti-kejadian')
+        .upload(filePath, file);
+
+    // Dapatkan public URL
+    final url = supabase.storage
+        .from('bukti-kejadian')
+        .getPublicUrl(filePath);
+
+    fotoUrls.add(url);
+  }
+
+  // 4. Update laporan dengan array URL foto
+  await supabase.from('laporan').update({
+    'foto_urls': fotoUrls,
+  }).eq('id', laporanId);
+}
+```
+
+### Contoh Penggunaan di Widget (Pengguna Jalan)
+
+```dart
+ElevatedButton(
+  onPressed: () async {
+    try {
+      await buatLaporanDenganFoto(
+        pelaporNama: 'Siti Rahma',
+        pelaporNoHp: '081234567890',
+        jenisKejadian: 'mogok',
+        lokasi: 'KM 14+200 A (Sby-Gempol)',
+        deskripsi: 'Mobil mogok di bahu jalan.',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Laporan berhasil dikirim!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  },
+  child: const Text('Kirim Laporan + Foto'),
+),
+```
+
+---
+
+## 6. Flutter: Upload Foto Bukti + Selesaikan Penugasan (Petugas)
+
+### Fungsi: Upload Foto + Selesaikan Penugasan
+
+```dart
 /// Pilih foto dari kamera/galeri, upload, lalu update penugasan jadi selesai
 Future<void> selesaikanPenugasan({
   required int penugasanId,
@@ -335,7 +424,7 @@ Future<void> selesaikanPenugasan({
 }
 ```
 
-### Contoh Penggunaan di Widget
+### Contoh Penggunaan di Widget (Petugas)
 
 ```dart
 ElevatedButton(
@@ -362,7 +451,7 @@ ElevatedButton(
 
 ---
 
-## 6. Checklist Akhir
+## 7. Checklist Akhir
 
 Sebelum go-live, pastikan semua sudah ✅:
 
