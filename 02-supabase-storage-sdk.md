@@ -130,7 +130,8 @@ Contoh hook untuk dashboard admin agar auto-update saat ada laporan baru:
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-// Tipe data laporan sesuai schema
+// Tipe data laporan sesuai schema (ENUM-based)
+// 💡 Tip: gunakan `npx supabase gen types typescript` untuk auto-generate dari ENUM
 interface Laporan {
   id: number;
   user_id: string | null;
@@ -140,7 +141,7 @@ interface Laporan {
   lokasi: string;
   deskripsi: string;
   foto_urls: string[] | null;  // array URL foto kejadian (multiple)
-  status: string;
+  status: 'menunggu' | 'diverifikasi' | 'ditugaskan' | 'proses' | 'selesai' | 'ditolak';
   created_at: string;
   updated_at: string;
 }

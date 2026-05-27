@@ -18,12 +18,30 @@
 
 ---
 
-## 1. Helper Function
+## 1. ENUM Types
+
+> [!IMPORTANT]
+> Jalankan blok ini **paling pertama** sebelum membuat tabel, karena tabel akan menggunakan tipe ENUM ini.
+
+```sql
+CREATE TYPE public.user_role        AS ENUM ('admin', 'petugas', 'pengguna');
+CREATE TYPE public.status_petugas   AS ENUM ('Tersedia', 'Bertugas', 'Tidak Aktif');
+CREATE TYPE public.jenis_armada     AS ENUM ('derek', 'patroli', 'towing', 'ambulan');
+CREATE TYPE public.status_armada    AS ENUM ('Tersedia', 'Digunakan', 'Dalam Perbaikan');
+CREATE TYPE public.jenis_kejadian   AS ENUM ('mogok', 'kecelakaan', 'hambatan', 'lainnya');
+CREATE TYPE public.status_laporan   AS ENUM ('menunggu', 'diverifikasi', 'ditugaskan',
+                                             'proses', 'selesai', 'ditolak');
+CREATE TYPE public.status_penugasan AS ENUM ('aktif', 'selesai');
+```
+
+---
+
+## 2. Helper Function
 
 ```sql
 -- Helper: ambil role user yang sedang login
 CREATE OR REPLACE FUNCTION public.get_my_role()
-RETURNS TEXT
+RETURNS public.user_role
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = public
 AS $$
@@ -33,7 +51,7 @@ $$;
 
 ---
 
-## 2. Tabel `profiles`
+## 3. Tabel `profiles`
 
 ```sql
 CREATE TABLE public.profiles (
@@ -41,10 +59,8 @@ CREATE TABLE public.profiles (
   nama           VARCHAR(100),
   email          VARCHAR(255),
   no_hp          VARCHAR(20),
-  role           VARCHAR(20) NOT NULL DEFAULT 'pengguna'
-                 CHECK (role IN ('admin', 'petugas', 'pengguna')),
-  status_petugas VARCHAR(20) DEFAULT 'Tidak Aktif'
-                 CHECK (status_petugas IN ('Tersedia', 'Bertugas', 'Tidak Aktif')),
+  role           public.user_role NOT NULL DEFAULT 'pengguna',
+  status_petugas public.status_petugas DEFAULT 'Tidak Aktif',
   is_active      BOOLEAN DEFAULT true,
   created_at     TIMESTAMPTZ DEFAULT now()
 );
@@ -53,17 +69,15 @@ CREATE INDEX idx_profiles_role ON public.profiles(role);
 
 ---
 
-## 3. Tabel `armada`
+## 4. Tabel `armada`
 
 ```sql
 CREATE TABLE public.armada (
   id           BIGSERIAL PRIMARY KEY,
   nama_armada  VARCHAR(100) NOT NULL,
-  jenis        VARCHAR(20) NOT NULL
-               CHECK (jenis IN ('derek', 'patroli', 'towing', 'ambulan')),
+  jenis        public.jenis_armada NOT NULL,
   nopol        VARCHAR(20) UNIQUE NOT NULL,
-  status       VARCHAR(20) DEFAULT 'Tersedia'
-               CHECK (status IN ('Tersedia', 'Digunakan', 'Dalam Perbaikan')),
+  status       public.status_armada DEFAULT 'Tersedia',
   pos          VARCHAR(100),
   created_at   TIMESTAMPTZ DEFAULT now()
 );
@@ -71,7 +85,7 @@ CREATE TABLE public.armada (
 
 ---
 
-## 4. Tabel `laporan`
+## 5. Tabel `laporan`
 
 ```sql
 CREATE TABLE public.laporan (
@@ -79,14 +93,11 @@ CREATE TABLE public.laporan (
   user_id        UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   pelapor_nama   VARCHAR(100) NOT NULL,
   pelapor_no_hp  VARCHAR(20),
-  jenis_kejadian VARCHAR(20) NOT NULL
-                 CHECK (jenis_kejadian IN ('mogok','kecelakaan','hambatan','lainnya')),
+  jenis_kejadian public.jenis_kejadian NOT NULL,
   lokasi         VARCHAR(255) NOT NULL,
   deskripsi      TEXT,
   foto_urls      TEXT[],        -- array URL foto kejadian (multiple foto)
-  status         VARCHAR(20) DEFAULT 'menunggu'
-                 CHECK (status IN ('menunggu','diverifikasi','ditugaskan',
-                                   'proses','selesai','ditolak')),
+  status         public.status_laporan DEFAULT 'menunggu',
   alasan_tolak   TEXT,
   created_at     TIMESTAMPTZ DEFAULT now(),
   updated_at     TIMESTAMPTZ DEFAULT now()
@@ -97,7 +108,7 @@ CREATE INDEX idx_laporan_user   ON public.laporan(user_id);
 
 ---
 
-## 5. Tabel `penugasan`
+## 6. Tabel `penugasan`
 
 ```sql
 CREATE TABLE public.penugasan (
@@ -106,8 +117,7 @@ CREATE TABLE public.penugasan (
   petugas_id      UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   armada_id       BIGINT REFERENCES public.armada(id) ON DELETE SET NULL,
   catatan_admin   TEXT,
-  status          VARCHAR(20) DEFAULT 'aktif'
-                  CHECK (status IN ('aktif', 'selesai')),
+  status          public.status_penugasan DEFAULT 'aktif',
   foto_bukti_url  VARCHAR(500),
   catatan_penutup TEXT,
   created_at      TIMESTAMPTZ DEFAULT now(),
@@ -120,7 +130,7 @@ CREATE INDEX idx_penugasan_status  ON public.penugasan(status);
 
 ---
 
-## 6. Auto-Update `updated_at`
+## 7. Auto-Update `updated_at`
 
 ```sql
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -138,7 +148,7 @@ CREATE TRIGGER on_laporan_updated
 
 ---
 
-## 7. Trigger: Auth → Profiles Auto-Sync
+## 8. Trigger: Auth → Profiles Auto-Sync
 
 > [!IMPORTANT]
 > Trigger ini **wajib** agar setiap user baru yang register otomatis punya baris di `profiles`.
@@ -188,7 +198,7 @@ await supabase.auth.signUp({
 
 ---
 
-## 8. Aktifkan RLS
+## 9. Aktifkan RLS
 
 ```sql
 ALTER TABLE public.profiles  ENABLE ROW LEVEL SECURITY;
@@ -199,7 +209,7 @@ ALTER TABLE public.armada    ENABLE ROW LEVEL SECURITY;
 
 ---
 
-## 9. RLS Policy — `profiles`
+## 10. RLS Policy — `profiles`
 
 | Role | SELECT | UPDATE |
 |------|--------|--------|
@@ -230,7 +240,7 @@ CREATE POLICY "service_insert_profiles" ON public.profiles
 
 ---
 
-## 10. RLS Policy — `laporan`
+## 11. RLS Policy — `laporan`
 
 | Role | SELECT | INSERT | UPDATE |
 |------|--------|--------|--------|
@@ -278,7 +288,7 @@ CREATE POLICY "anon_insert_laporan" ON public.laporan
 
 ---
 
-## 11. RLS Policy — `penugasan`
+## 12. RLS Policy — `penugasan`
 
 | Role | SELECT | INSERT | UPDATE |
 |------|--------|--------|--------|
@@ -301,7 +311,7 @@ CREATE POLICY "petugas_update_own_penugasan" ON public.penugasan
 
 ---
 
-## 12. RLS Policy — `armada`
+## 13. RLS Policy — `armada`
 
 | Role | SELECT | INSERT/UPDATE/DELETE |
 |------|--------|---------------------|
