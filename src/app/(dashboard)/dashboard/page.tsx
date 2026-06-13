@@ -2,8 +2,8 @@
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
-import { FileText, Clock, Loader, CheckCircle, ArrowRight, TrendingUp } from "lucide-react";
-import { mockLaporan, mockPetugas } from "@/data/mockData";
+import { FileText, Clock, Loader, CheckCircle, ArrowRight, TrendingUp, RefreshCw } from "lucide-react";
+import { mockPetugas } from "@/data/mockData";
 import { DataTable } from "@/components/shared/DataTable";
 import { BadgeStatus } from "@/components/shared/BadgeStatus";
 import { Badge } from "@/components/ui/badge";
@@ -11,35 +11,40 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Petugas } from "@/types";
+import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
+import { useRealtimePetugas } from "@/hooks/useRealtimePetugas";
 
 export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState("Week");
-  const [petugasData, setPetugasData] = useState<Petugas[]>(mockPetugas);
+  
+  // Menggunakan hook realtime yang ditarik dari Supabase
+  const { laporanList, loading: loadingLaporan } = useRealtimeLaporan();
+  const { petugasList, loading: loadingPetugas } = useRealtimePetugas();
 
-  useEffect(() => {
-    const saved = localStorage.getItem("petugas_data");
-    if (saved) {
-      try {
-        setPetugasData(JSON.parse(saved));
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
+  if (loadingLaporan || loadingPetugas) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+        <p className="text-gray-500 font-medium">Menghubungkan ke Supabase (Realtime)...</p>
+      </div>
+    );
+  }
 
-  // Stats calculation
-  const totalLaporan = mockLaporan.length;
-  const menungguCount = mockLaporan.filter((l) => l.status === "menunggu").length;
-  const prosesCount = mockLaporan.filter((l) => l.status === "proses").length;
-  const selesaiCount = mockLaporan.filter((l) => l.status === "selesai").length;
+  // Stats calculation (dari data live Supabase)
+  const totalLaporan = laporanList.length;
+  const menungguCount = laporanList.filter((l) => l.status === "menunggu").length;
+  const prosesCount = laporanList.filter((l) => l.status === "proses").length;
+  const selesaiCount = laporanList.filter((l) => l.status === "selesai").length;
 
   // Laporan Terbaru (Top 5)
-  const recentReports = [...mockLaporan].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+  const recentReports = [...laporanList]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5);
 
   const laporanCols = [
-    { header: "Waktu", cell: (item: any) => new Date(item.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) },
-    { header: "Pelapor", accessorKey: "pelaporNama" as any },
-    { header: "Jenis", cell: (item: any) => <span className="capitalize">{item.jenisKejadian}</span> },
+    { header: "Waktu", cell: (item: any) => new Date(item.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) },
+    { header: "Pelapor", accessorKey: "pelapor_nama" as any },
+    { header: "Jenis", cell: (item: any) => <span className="capitalize">{item.jenis_kejadian}</span> },
     { header: "Lokasi", accessorKey: "lokasi" as any },
     { header: "Status", cell: (item: any) => <BadgeStatus status={item.status} className="rounded-full shadow-none" /> },
   ];
@@ -50,11 +55,11 @@ export default function DashboardPage() {
         <PageHeader title="Hello, Admin!" />
       </div>
 
-      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <TrendingUp className="w-5 h-5" /> Ada 3 laporan baru dalam 1 jam terakhir.
+      <div className="bg-blue-50/80 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium text-blue-800">
+          <TrendingUp className="w-5 h-5 text-blue-600" /> Dashboard ini sudah terhubung secara Live ke Supabase!
         </div>
-        <Button variant="outline" className="rounded-full bg-white border-gray-200 shadow-sm text-xs font-semibold">
+        <Button variant="outline" className="rounded-full bg-white border-blue-200 shadow-sm text-xs font-semibold text-blue-700 hover:bg-blue-50">
           Tugas Aktif &nearr;
         </Button>
       </div>
@@ -74,22 +79,36 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Total Laporan" value={totalLaporan} description="Dari 34 (7 hari terakhir)" />
-            <StatCard title="Menunggu" value={menungguCount} description="Perlu verifikasi segera" />
+            <StatCard title="Total Laporan" value={totalLaporan} description="Laporan masuk" />
+            <StatCard title="Menunggu" value={menungguCount} description="Perlu verifikasi" />
             <StatCard title="Sedang Proses" value={prosesCount} description="Ditangani petugas" />
-            <StatCard title="Selesai" value={selesaiCount} description="Dari 20 (7 hari terakhir)" />
+            <StatCard title="Selesai" value={selesaiCount} description="Laporan selesai" />
           </div>
 
           <div className="pt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Laporan Terbaru</h3>
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                Laporan Terbaru (Live)
+              </h3>
               <Link href="/laporan">
                 <Button variant="ghost" size="sm" className="text-black font-semibold hover:bg-gray-100 rounded-full">
                   Lihat Semua &rarr;
                 </Button>
               </Link>
             </div>
-            <DataTable columns={laporanCols} data={recentReports} />
+            
+            {recentReports.length > 0 ? (
+              <DataTable columns={laporanCols} data={recentReports} />
+            ) : (
+              <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-gray-500">
+                <FileText className="w-8 h-8 mb-2 text-gray-400" />
+                <p>Belum ada laporan di database Supabase Anda.</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -98,7 +117,7 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Kesiapan Petugas</h3>
-              <Link href="/petugas" className="text-xs font-semibold hover:underline">
+              <Link href="/petugas" className="text-xs font-semibold hover:underline cursor-pointer">
                 Lihat Semua &rarr;
               </Link>
             </div>
@@ -106,15 +125,15 @@ export default function DashboardPage() {
             <div className="bg-white border border-gray-200 rounded-3xl p-5 space-y-4">
               <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-3">
                 <span className="text-gray-500 font-medium">Tersedia</span>
-                <span className="font-bold text-lg">{petugasData.filter((p) => p.status === "Tersedia").length}</span>
+                <span className="font-bold text-lg">{petugasList.filter((p) => p.status_petugas === "Tersedia").length}</span>
               </div>
               <div className="flex justify-between items-center text-sm border-b border-gray-50 pb-3">
                 <span className="text-gray-500 font-medium">Bertugas</span>
-                <span className="font-bold text-lg">{petugasData.filter((p) => p.status === "Bertugas").length}</span>
+                <span className="font-bold text-lg">{petugasList.filter((p) => p.status_petugas === "Bertugas").length}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500 font-medium">Total Petugas</span>
-                <span className="font-bold text-lg">{petugasData.length}</span>
+                <span className="font-bold text-lg">{petugasList.length}</span>
               </div>
             </div>
           </div>
@@ -124,12 +143,12 @@ export default function DashboardPage() {
               <h3 className="text-lg font-bold text-gray-900">Aktivitas Petugas</h3>
             </div>
             <div className="bg-white border border-gray-200 rounded-3xl p-5 space-y-5">
-              {petugasData.slice(0, 4).map((petugas) => (
+              {petugasList.slice(0, 4).map((petugas) => (
                 <div key={petugas.id} className="flex gap-3 items-center">
                   <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-700 shrink-0">{petugas.nama[0]}</div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">{petugas.nama}</p>
-                    <p className="text-[11px] text-gray-500 font-medium">{petugas.status === "Tersedia" ? "Siaga di posko" : "Sedang menangani laporan"}</p>
+                    <p className="text-[11px] text-gray-500 font-medium">{petugas.status_petugas === "Tersedia" ? "Siaga di posko" : "Sedang menangani laporan"}</p>
                   </div>
                 </div>
               ))}

@@ -2,6 +2,9 @@ export type StatusLaporan =
   | 'menunggu' 
   | 'diverifikasi' 
   | 'ditugaskan' 
+  | 'diterima'
+  | 'menuju'
+  | 'tiba'
   | 'proses' 
   | 'selesai' 
   | 'ditolak';

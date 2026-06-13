@@ -36,22 +36,7 @@ CREATE TYPE public.status_penugasan AS ENUM ('aktif', 'selesai');
 
 ---
 
-## 2. Helper Function
-
-```sql
--- Helper: ambil role user yang sedang login
-CREATE OR REPLACE FUNCTION public.get_my_role()
-RETURNS public.user_role
-LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT role FROM public.profiles WHERE id = auth.uid();
-$$;
-```
-
----
-
-## 3. Tabel `profiles`
+## 2. Tabel `profiles`
 
 ```sql
 CREATE TABLE public.profiles (
@@ -65,6 +50,21 @@ CREATE TABLE public.profiles (
   created_at     TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX idx_profiles_role ON public.profiles(role);
+```
+
+---
+
+## 3. Helper Function
+
+```sql
+-- Helper: ambil role user yang sedang login
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS public.user_role
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$;
 ```
 
 ---

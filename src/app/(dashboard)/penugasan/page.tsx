@@ -1,15 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { BadgeStatus } from '@/components/shared/BadgeStatus';
-import { mockPenugasan, mockLaporan, mockPetugas, mockArmada } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Search, FileText, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState, useEffect } from 'react';
 import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
+import { useRealtimePenugasan } from '@/hooks/useRealtimePenugasan';
 
 export default function PenugasanPage() {
   const [page, setPage] = useState(1);
@@ -18,57 +18,32 @@ export default function PenugasanPage() {
   const [jenisFilter, setJenisFilter] = useState('semua');
   const itemsPerPage = 5;
   
-  const [penugasanData, setPenugasanData] = useState<any[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
-  const [selectedLaporanId, setSelectedLaporanId] = useState<string | null>(null);
+  const [selectedLaporanId, setSelectedLaporanId] = useState<number | null>(null);
 
-  const loadData = () => {
-    const savedPenugasan = localStorage.getItem("penugasan_data");
-    let allPenugasan = savedPenugasan ? JSON.parse(savedPenugasan) : [...mockPenugasan];
-    
-    const savedLaporan = localStorage.getItem("laporan_data");
-    let allLaporan = savedLaporan ? JSON.parse(savedLaporan) : [...mockLaporan];
-    
-    const savedPetugas = localStorage.getItem("petugas_data");
-    let allPetugas = savedPetugas ? JSON.parse(savedPetugas) : [...mockPetugas];
-    
-    const savedArmada = localStorage.getItem("armada_data");
-    let allArmada = savedArmada ? JSON.parse(savedArmada) : [...mockArmada];
+  const { penugasanList, loading } = useRealtimePenugasan();
 
-    const enrichedList = allPenugasan
-      .filter((p: any) => p.status === 'aktif')
-      .map((p: any) => {
-        const laporan = allLaporan.find((l: any) => l.id === p.laporanId);
-        const petugas = allPetugas.find((pt: any) => pt.id === p.petugasId);
-        const armada = allArmada.find((a: any) => a.id === p.armadaId);
-        
-        return { ...p, laporan, petugas, armada };
-      });
-
-    // Urutkan berdasarkan waktu paling baru
-    enrichedList.sort((a: any, b: any) => new Date(b.waktuDitugaskan).getTime() - new Date(a.waktuDitugaskan).getTime());
-    
-    setPenugasanData(enrichedList);
-  };
-
-  useEffect(() => {
-    setIsMounted(true);
-    loadData();
-  }, []);
-
-  if (!isMounted) return null;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+        <p className="text-gray-500 font-medium">Memuat data penugasan realtime...</p>
+      </div>
+    );
+  }
 
   // Filter Data
-  const filteredData = penugasanData.filter((item: any) => {
-    const matchSearch = item.petugas?.nama?.toLowerCase().includes(search.toLowerCase()) || 
-                        item.laporan?.lokasi?.toLowerCase().includes(search.toLowerCase());
+  const filteredData = penugasanList.filter((item) => {
+    const matchSearch = (item.petugas?.nama?.toLowerCase() || '').includes(search.toLowerCase()) || 
+                        (item.laporan?.lokasi?.toLowerCase() || '').includes(search.toLowerCase());
                         
     const statusLaporan = item.laporan?.status || 'menunggu';
     const matchStatus = statusFilter === 'semua' || statusLaporan === statusFilter;
     
-    const jenisKejadian = item.laporan?.jenisKejadian || '';
+    const jenisKejadian = item.laporan?.jenis_kejadian || '';
     const matchJenis = jenisFilter === 'semua' || jenisKejadian === jenisFilter;
 
+    // By default, maybe we only want to show 'aktif' penugasan?
+    // Let's show all for history, but if the user wants they can filter.
     return matchSearch && matchStatus && matchJenis;
   });
 
@@ -76,14 +51,14 @@ export default function PenugasanPage() {
   const paginatedData = filteredData.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const columns = [
-    { header: 'ID Laporan', accessorKey: 'laporanId' as any },
-    { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{item.laporan?.jenisKejadian}</span> },
-    { header: 'Lokasi', cell: (item: any) => item.laporan?.lokasi },
-    { header: 'Petugas', cell: (item: any) => item.petugas?.nama },
-    { header: 'Armada', cell: (item: any) => item.armada?.nopol },
+    { header: 'ID Laporan', accessorKey: 'laporan_id' as any },
+    { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{item.laporan?.jenis_kejadian || '-'}</span> },
+    { header: 'Lokasi', cell: (item: any) => item.laporan?.lokasi || '-' },
+    { header: 'Petugas', cell: (item: any) => item.petugas?.nama || '-' },
+    { header: 'Armada', cell: (item: any) => item.armada?.nopol || '-' },
     { 
       header: 'Waktu Ditugaskan', 
-      cell: (item: any) => new Date(item.waktuDitugaskan).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit' }) 
+      cell: (item: any) => new Date(item.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) 
     },
     { header: 'Status Laporan', cell: (item: any) => <BadgeStatus status={item.laporan?.status || 'menunggu'} /> },
     { 
@@ -93,7 +68,7 @@ export default function PenugasanPage() {
           variant="ghost" 
           size="icon" 
           className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-          onClick={() => setSelectedLaporanId(item.laporanId)}
+          onClick={() => setSelectedLaporanId(item.laporan_id)}
         >
           <Eye className="h-4 w-4" />
         </Button>
@@ -105,7 +80,7 @@ export default function PenugasanPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeader 
         title="Penugasan Aktif" 
-        description="Pantau petugas dan armada yang sedang bertugas di lapangan saat ini."
+        description="Pantau petugas dan armada yang sedang bertugas di lapangan saat ini secara realtime."
       />
 
       <div className="flex flex-col sm:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
@@ -145,15 +120,23 @@ export default function PenugasanPage() {
         </Select>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={paginatedData} 
-        pagination={{
-          page,
-          totalPages: totalPages === 0 ? 1 : totalPages,
-          onPageChange: setPage
-        }}
-      />
+      {filteredData.length > 0 ? (
+        <DataTable 
+          columns={columns} 
+          data={paginatedData} 
+          pagination={{
+            page,
+            totalPages: totalPages === 0 ? 1 : totalPages,
+            onPageChange: setPage
+          }}
+        />
+      ) : (
+        <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-12 flex flex-col items-center justify-center text-gray-500">
+          <FileText className="w-12 h-12 mb-4 text-gray-300" />
+          <p className="text-lg font-medium text-gray-900">Tidak ada penugasan</p>
+          <p className="text-sm">Belum ada armada yang ditugaskan saat ini.</p>
+        </div>
+      )}
 
       <LaporanDetailSheet 
         laporanId={selectedLaporanId}
@@ -161,7 +144,6 @@ export default function PenugasanPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedLaporanId(null);
         }}
-        onLaporanUpdated={loadData}
       />
     </div>
   );

@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { Save, User, Camera, Trash2, X } from 'lucide-react';
+import { Save, User, Camera, Trash2, X, Loader2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 export default function ProfilPage() {
   const { user, updateUser } = useAuth();
@@ -19,48 +21,95 @@ export default function ProfilPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [passwordData, setPasswordData] = useState({
-    lama: '',
     baru: '',
     konfirmasi: ''
   });
+  
+  const [isUpdatingProfil, setIsUpdatingProfil] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
       setFormData({
-        nama: user.nama,
-        email: user.email,
-        noHp: user.noHp,
+        nama: user.nama || '',
+        email: user.email || '',
+        noHp: user.noHp || '',
       });
     }
   }, [user]);
 
-  const handleUpdateProfil = (e: React.FormEvent) => {
+  const handleUpdateProfil = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUser({
+    setIsUpdatingProfil(true);
+    
+    const success = await updateUser({
       nama: formData.nama,
       noHp: formData.noHp
     });
-    alert('Profil berhasil diperbarui!');
+    
+    setIsUpdatingProfil(false);
+    if (success) {
+      toast.success('Profil berhasil diperbarui!');
+    } else {
+      toast.error('Gagal memperbarui profil.');
+    }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.baru !== passwordData.konfirmasi) {
-      alert('Konfirmasi password baru tidak cocok!');
+      toast.error('Konfirmasi password baru tidak cocok!');
       return;
     }
-    alert('Password berhasil diperbarui (Simulasi)!');
-    setPasswordData({ lama: '', baru: '', konfirmasi: '' });
+    
+    setIsUpdatingPassword(true);
+    const { error } = await supabase.auth.updateUser({
+      password: passwordData.baru
+    });
+    setIsUpdatingPassword(false);
+    
+    if (error) {
+      toast.error('Gagal memperbarui password: ' + error.message);
+    } else {
+      toast.success('Password berhasil diperbarui!');
+      setPasswordData({ baru: '', konfirmasi: '' });
+    }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateUser({ profileImage: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Ukuran file maksimal 2MB");
+        return;
+      }
+      
+      toast.loading("Mengunggah foto...", { id: 'upload-foto' });
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        toast.error("Gagal mengunggah foto: " + uploadError.message, { id: 'upload-foto' });
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const success = await updateUser({ profileImage: data.publicUrl });
+      
+      if (success) {
+        toast.success('Foto profil berhasil diubah!', { id: 'upload-foto' });
+      } else {
+        toast.error('Gagal menyimpan foto ke profil.', { id: 'upload-foto' });
+      }
     }
   };
 
@@ -161,8 +210,8 @@ export default function ProfilPage() {
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-                    <Save className="w-4 h-4 mr-2" /> Simpan Perubahan
+                  <Button type="submit" disabled={isUpdatingProfil} className="bg-blue-600 hover:bg-blue-700">
+                    {isUpdatingProfil ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Simpan Perubahan
                   </Button>
                 </div>
               </form>
@@ -177,10 +226,6 @@ export default function ProfilPage() {
             <CardContent>
               <form onSubmit={handleUpdatePassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="lama">Password Lama</Label>
-                  <Input id="lama" type="password" required value={passwordData.lama} onChange={e => setPasswordData({...passwordData, lama: e.target.value})} className="bg-white max-w-sm" />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="baru">Password Baru</Label>
                   <Input id="baru" type="password" required value={passwordData.baru} onChange={e => setPasswordData({...passwordData, baru: e.target.value})} className="bg-white max-w-sm" />
                 </div>
@@ -189,8 +234,8 @@ export default function ProfilPage() {
                   <Input id="konfirmasi" type="password" required value={passwordData.konfirmasi} onChange={e => setPasswordData({...passwordData, konfirmasi: e.target.value})} className="bg-white max-w-sm" />
                 </div>
                 <div className="flex justify-end pt-2">
-                  <Button type="submit" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                    <Save className="w-4 h-4 mr-2" /> Perbarui Password
+                  <Button type="submit" variant="outline" disabled={isUpdatingPassword} className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                    {isUpdatingPassword ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />} Perbarui Password
                   </Button>
                 </div>
               </form>

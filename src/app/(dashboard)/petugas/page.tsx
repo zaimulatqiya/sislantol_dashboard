@@ -1,28 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable } from "@/components/shared/DataTable";
-import { mockPetugas } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Plus, UserX, Search } from "lucide-react";
-import { Petugas } from "@/types";
+import { Pencil, Plus, UserX, Search, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
+import { useRealtimePetugas, PetugasDB } from "@/hooks/useRealtimePetugas";
+import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function PetugasPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
-  const [data, setData] = useState<Petugas[]>([]);
+  
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("semua");
   const itemsPerPage = 5;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { petugasList, loading, refetch } = useRealtimePetugas();
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -34,65 +49,35 @@ export default function PetugasPage() {
 
   const [editFormData, setEditFormData] = useState({
     nama: "",
-    email: "",
-    password: "",
     noHp: "",
-    pos: "",
+    status_petugas: "Tersedia" as any,
+    is_active: true,
   });
 
-  // Load data dari localStorage di awal, atau gunakan data palsu (mockPetugas)
-  useEffect(() => {
-    setIsMounted(true);
-    const saved = localStorage.getItem("petugas_data");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.length !== mockPetugas.length || (parsed.length > 0 && parsed[0].pos === undefined)) {
-          setData([...mockPetugas]);
-        } else {
-          // Normalisasi status jika ada data lama yang salah tipe
-          const normalized = parsed.map((p: any) => ({
-            ...p,
-            status: p.status === 'Sedang Bertugas' ? 'Bertugas' : p.status
-          }));
-          setData(normalized);
-        }
-      } catch {
-        setData([...mockPetugas]);
-      }
-    } else {
-      setData([...mockPetugas]);
-    }
-  }, []);
-
-  // Simpan data ke localStorage setiap kali data berubah
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem("petugas_data", JSON.stringify(data));
-    }
-  }, [data, isMounted]);
   const columns = [
-    { header: "Nama", accessorKey: "nama" as any },
-    { header: "Email", accessorKey: "email" as any },
-    { header: "Password", accessorKey: "password" as any },
-    { header: "No HP", accessorKey: "noHp" as any },
-    { header: "Pos", accessorKey: "pos" as any },
+    { header: "Nama Lengkap", accessorKey: "nama" as any },
+    { header: "No HP", accessorKey: "no_hp" as any },
     {
       header: "Status",
-      cell: (item: Petugas) => (
-        <Badge variant={item.status === "Tersedia" ? "outline" : "secondary"} className={item.status === "Tersedia" ? "text-green-600 border-green-200 bg-green-50" : ""}>
-          {item.status}
-        </Badge>
-      ),
+      cell: (item: PetugasDB) => {
+        if (!item.is_active) {
+          return <Badge variant="secondary" className="text-gray-600 bg-gray-100">Tidak Aktif</Badge>;
+        }
+        return (
+          <Badge variant={item.status_petugas === "Tersedia" ? "outline" : "secondary"} className={item.status_petugas === "Tersedia" ? "text-green-600 border-green-200 bg-green-50" : ""}>
+            {item.status_petugas}
+          </Badge>
+        );
+      },
     },
     {
       header: "Aksi",
-      cell: (item: Petugas) => (
+      cell: (item: PetugasDB) => (
         <div className="flex gap-2">
           <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" onClick={() => handleEditClick(item)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50" onClick={() => handleDelete(item.id)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50" onClick={() => setDeleteId(item.id)}>
             <UserX className="h-4 w-4" />
           </Button>
         </div>
@@ -100,70 +85,126 @@ export default function PetugasPage() {
     },
   ];
 
-  const handleEditClick = (petugas: Petugas) => {
+  const handleEditClick = (petugas: PetugasDB) => {
     setEditId(petugas.id);
     setEditFormData({
       nama: petugas.nama,
-      email: petugas.email,
-      password: petugas.password || "",
-      noHp: petugas.noHp,
-      pos: petugas.pos || "",
+      noHp: petugas.no_hp || "",
+      status_petugas: petugas.status_petugas,
+      is_active: petugas.is_active,
     });
     setIsEditOpen(true);
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setData(data.map((item) => (item.id === editId ? { ...item, ...editFormData } : item)));
-    setIsEditOpen(false);
-    setEditId(null);
-  };
+    if (!editId) return;
+    setIsSubmitting(true);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus petugas ini?")) {
-      setData(data.filter((item) => item.id !== id));
+    try {
+      await supabase.from("profiles").update({
+        nama: editFormData.nama,
+        no_hp: editFormData.noHp,
+        status_petugas: editFormData.status_petugas,
+        is_active: editFormData.is_active,
+      }).eq("id", editId);
+      
+      toast.success("Profil petugas berhasil diperbarui");
+      setIsEditOpen(false);
+      setEditId(null);
+      refetch();
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Gagal memperbarui profil petugas: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newPetugas: Petugas = {
-      id: `p${data.length + 1}`,
-      nama: formData.nama,
-      email: formData.email,
-      password: formData.password,
-      noHp: formData.noHp,
-      pos: formData.pos,
-      status: "Tersedia",
-    };
-    setData([...data, newPetugas]);
-    setIsAddOpen(false);
-    setFormData({ nama: "", email: "", password: "", noHp: "", pos: "" });
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/petugas?id=${deleteId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      
+      toast.success("Petugas berhasil dihapus");
+      setDeleteId(null);
+      refetch();
+    } catch (error: any) {
+      toast.error("Gagal menghapus petugas: " + error.message);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const filteredData = data.filter((item) => {
-    const matchSearch = item.nama.toLowerCase().includes(search.toLowerCase()) || (item.pos || "").toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "semua" || item.status === statusFilter;
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/admin/petugas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+
+      toast.success("Petugas berhasil didaftarkan!");
+      setIsAddOpen(false);
+      setFormData({ nama: "", email: "", password: "", noHp: "", pos: "" });
+      refetch();
+    } catch (error: any) {
+      toast.error("Gagal mendaftarkan petugas: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+        <p className="text-gray-500 font-medium">Memuat data petugas realtime...</p>
+      </div>
+    );
+  }
+
+  const filteredData = petugasList.filter((item) => {
+    const matchSearch = item.nama?.toLowerCase().includes(search.toLowerCase());
+    
+    let matchStatus = true;
+    if (statusFilter !== "semua") {
+      if (statusFilter === "Tidak Aktif") {
+        matchStatus = !item.is_active;
+      } else {
+        matchStatus = item.is_active && item.status_petugas === statusFilter;
+      }
+    }
+    
     return matchSearch && matchStatus;
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
-  if (!isMounted) return null; // Mencegah tampilan berkedip sebelum localStorage termuat (Hydration safe)
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <PageHeader
         title="Manajemen Petugas"
-        description="Kelola data petugas lapangan."
+        description="Kelola akun dan status operasional petugas lapangan."
       />
 
       <div className="flex flex-col sm:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Cari nama atau pos..."
+            placeholder="Cari nama petugas..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="pl-9 bg-white"
@@ -188,7 +229,7 @@ export default function PetugasPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Tambah Petugas Baru</DialogTitle>
+              <DialogTitle>Daftarkan Petugas Baru</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -209,14 +250,18 @@ export default function PetugasPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pos">Pos / Lokasi Standby</Label>
-                <Input id="pos" required value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Contoh: Satelit" />
+                <Input id="pos" value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Opsional" />
               </div>
-              <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-                Simpan Petugas
+              <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+                {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Buat Akun Petugas"}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="flex justify-between items-center text-sm font-medium text-gray-500 pb-1">
+        <span>Menampilkan <span className="text-gray-900 font-bold">{filteredData.length}</span> petugas.</span>
       </div>
 
       <DataTable
@@ -229,11 +274,10 @@ export default function PetugasPage() {
         }}
       />
 
-      {/* Modal / Dialog Edit */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Data Petugas</DialogTitle>
+            <DialogTitle>Edit Profil Petugas</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
             <div className="space-y-2">
@@ -241,27 +285,68 @@ export default function PetugasPage() {
               <Input id="edit-nama" required value={editFormData.nama} onChange={(e) => setEditFormData({ ...editFormData, nama: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input id="edit-email" type="email" required value={editFormData.email} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-password">Password</Label>
-              <Input id="edit-password" type="text" required value={editFormData.password} onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })} />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="edit-noHp">Nomor HP</Label>
               <Input id="edit-noHp" required value={editFormData.noHp} onChange={(e) => setEditFormData({ ...editFormData, noHp: e.target.value })} />
             </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="edit-pos">Pos / Lokasi Standby</Label>
-              <Input id="edit-pos" required value={editFormData.pos} onChange={(e) => setEditFormData({ ...editFormData, pos: e.target.value })} />
+              <Label htmlFor="edit-status">Status Operasional</Label>
+              <Select value={editFormData.status_petugas} onValueChange={(val: any) => setEditFormData({ ...editFormData, status_petugas: val })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tersedia">Tersedia</SelectItem>
+                  <SelectItem value="Bertugas">Bertugas</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-              Simpan Perubahan
+
+            <div className="space-y-2 pt-2 border-t mt-4">
+              <Label htmlFor="edit-active">Akses Akun</Label>
+              <Select value={editFormData.is_active ? "true" : "false"} onValueChange={(val: any) => setEditFormData({ ...editFormData, is_active: val === "true" })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Akses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Aktif (Dapat Login)</SelectItem>
+                  <SelectItem value="false">Dinonaktifkan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+              {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Simpan Perubahan"}
             </Button>
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-red-100 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <AlertDialogTitle className="text-xl">Hapus Petugas?</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-gray-600 text-base">
+              Tindakan ini akan <strong>menghapus akun login</strong> petugas secara permanen dari sistem. Anda yakin ingin melanjutkan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => { e.preventDefault(); handleDelete(); }} 
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Ya, Hapus Permanen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

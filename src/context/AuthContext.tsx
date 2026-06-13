@@ -1,36 +1,97 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Admin } from '@/types';
-import { mockAdmin } from '@/data/mockData';
 import { useRouter, usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+// Tipe data Admin yang disesuaikan dengan data dari Supabase (auth.users + profiles)
+export interface AdminUser {
+  id: string;
+  email: string;
+  nama: string;
+  role: string;
+  noHp?: string;
+  profileImage?: string;
+}
 
 interface AuthContextType {
-  user: Admin | null;
+  user: AdminUser | null;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
-  updateUser: (newData: Partial<Admin>) => void;
+  updateUser: (updates: Partial<AdminUser>) => Promise<boolean>;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Admin | null>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check localStorage on mount
-    const stored = localStorage.getItem('sislantol_admin');
-    const isLoggedIn = localStorage.getItem('sislantol_logged_in') === 'true';
-    
-    if (stored && isLoggedIn) {
-      setUser(JSON.parse(stored));
-    }
-    setIsLoading(false);
+    // 1. Dapatkan session saat ini dari Supabase
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await fetchProfile(session.user);
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+
+    // 2. Dengarkan perubahan status otentikasi (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await fetchProfile(session.user);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const fetchProfile = async (authUser: any) => {
+    try {
+      // Ambil data tambahan (nama, role) dari tabel profiles
+      // Juga coba ambil no_hp dan profile_image jika ada
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('nama, role, no_hp, profile_image')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error) throw error;
+
+      // Pastikan hanya admin yang bisa mengakses dashboard
+      if (data.role !== 'admin') {
+        await supabase.auth.signOut();
+        setUser(null);
+        alert("Akses Ditolak: Akun Anda bukan Admin.");
+      } else {
+        setUser({
+          id: authUser.id,
+          email: authUser.email,
+          nama: data.nama,
+          role: data.role,
+          noHp: data.no_hp || '',
+          profileImage: data.profile_image || undefined,
+        });
+      }
+    } catch (error) {
+      console.error("Gagal mengambil profil:", error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoading) {
@@ -43,41 +104,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, isLoading, pathname, router]);
 
   const login = async (email: string, pass: string) => {
-    // Mock login delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    if (email === mockAdmin.email && pass === 'password') { // simple mock
-      // Check if we already have a saved user with this email
-      const stored = localStorage.getItem('sislantol_admin');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.email === email) {
-          setUser(parsed);
-          localStorage.setItem('sislantol_logged_in', 'true');
-          return true;
-        }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: pass,
+      });
+
+      if (error || !data.user) {
+        return false;
       }
-      
-      // Default fallback to mockAdmin
-      setUser(mockAdmin);
-      localStorage.setItem('sislantol_admin', JSON.stringify(mockAdmin));
-      localStorage.setItem('sislantol_logged_in', 'true');
-      return true;
+      return true; // onAuthStateChange akan menangani fetchProfile
+    } catch (e) {
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.setItem('sislantol_logged_in', 'false');
     router.push('/login');
   };
 
-  const updateUser = (newData: Partial<Admin>) => {
-    if (user) {
-      const updatedUser = { ...user, ...newData };
-      setUser(updatedUser);
-      localStorage.setItem('sislantol_admin', JSON.stringify(updatedUser));
+  const updateUser = async (updates: Partial<AdminUser>) => {
+    if (!user) return false;
+
+    try {
+      // Update data di Supabase (tabel profiles)
+      const dbUpdates: any = {};
+      if (updates.nama !== undefined) dbUpdates.nama = updates.nama;
+      if (updates.noHp !== undefined) dbUpdates.no_hp = updates.noHp;
+      if (updates.profileImage !== undefined) dbUpdates.profile_image = updates.profileImage;
+
+      if (Object.keys(dbUpdates).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(dbUpdates)
+          .eq('id', user.id);
+          
+        if (error) throw error;
+      }
+
+      // Update state lokal (user context)
+      setUser((prevUser) => prevUser ? { ...prevUser, ...updates } : prevUser);
+      return true;
+    } catch (error) {
+      console.error("Gagal memperbarui profil:", error);
+      return false;
     }
   };
 
