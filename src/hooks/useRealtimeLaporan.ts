@@ -27,7 +27,13 @@ export function useRealtimeLaporan() {
     setLoading(true);
     const { data, error } = await supabase
       .from('laporan')
-      .select('*')
+      .select(`
+        *,
+        penugasan (
+          *,
+          petugas:profiles (*)
+        )
+      `)
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -54,16 +60,12 @@ export function useRealtimeLaporan() {
 
           setLaporanList((prev) => {
             if (eventType === 'INSERT') {
-              // Tambah laporan baru di awal list
-              return [newRecord as Laporan, ...prev];
+              fetchInitial(); // re-fetch to get relations
+              return prev;
             }
             if (eventType === 'UPDATE') {
-              // Update laporan yang berubah
-              return prev.map((item) =>
-                item.id === (newRecord as Laporan).id
-                  ? (newRecord as Laporan)
-                  : item
-              );
+              fetchInitial(); // re-fetch to get relations
+              return prev;
             }
             if (eventType === 'DELETE') {
               // Hapus laporsupan

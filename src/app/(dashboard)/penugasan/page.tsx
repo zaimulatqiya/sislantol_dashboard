@@ -43,9 +43,9 @@ export default function PenugasanPage() {
     const jenisKejadian = item.laporan?.jenis_kejadian || '';
     const matchJenis = jenisFilter === 'semua' || jenisKejadian === jenisFilter;
 
-    // By default, maybe we only want to show 'aktif' penugasan?
-    // Let's show all for history, but if the user wants they can filter.
-    return matchSearch && matchStatus && matchJenis;
+    const isNotFinished = statusLaporan !== 'selesai' && statusLaporan !== 'ditolak';
+
+    return matchSearch && matchStatus && matchJenis && isNotFinished;
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -103,7 +103,6 @@ export default function PenugasanPage() {
             <SelectItem value="semua">Semua Status</SelectItem>
             <SelectItem value="ditugaskan">Ditugaskan</SelectItem>
             <SelectItem value="proses">Proses</SelectItem>
-            <SelectItem value="selesai">Selesai</SelectItem>
           </SelectContent>
         </Select>
 
