@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, Search, FileText, RefreshCw } from 'lucide-react';
 import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { LaporanDetailSheet } from './LaporanDetailSheet';
+import { getDisplayJenisKejadian } from '@/lib/utils';
 
 export default function LaporanPage() {
   const [selectedLaporanId, setSelectedLaporanId] = useState<number | null>(null);
@@ -60,7 +61,7 @@ export default function LaporanPage() {
       }) 
     },
     { header: 'Pelapor', accessorKey: 'pelapor_nama' as any },
-    { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{item.jenis_kejadian}</span> },
+    { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{getDisplayJenisKejadian(item.jenis_kejadian, item.deskripsi)}</span> },
     { header: 'Lokasi', accessorKey: 'lokasi' as any },
     { header: 'Status', cell: (item: any) => <BadgeStatus status={item.status} /> },
     { 

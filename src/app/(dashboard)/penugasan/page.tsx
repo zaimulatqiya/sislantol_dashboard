@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
 import { useRealtimePenugasan } from '@/hooks/useRealtimePenugasan';
+import { getDisplayJenisKejadian } from '@/lib/utils';
 
 export default function PenugasanPage() {
   const [page, setPage] = useState(1);
@@ -52,7 +53,7 @@ export default function PenugasanPage() {
 
   const columns = [
     { header: 'ID Laporan', accessorKey: 'laporan_id' as any },
-    { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{item.laporan?.jenis_kejadian || '-'}</span> },
+    { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{getDisplayJenisKejadian(item.laporan?.jenis_kejadian, item.laporan?.deskripsi) || '-'}</span> },
     { header: 'Lokasi', cell: (item: any) => item.laporan?.lokasi || '-' },
     { header: 'Petugas', cell: (item: any) => item.petugas?.nama || '-' },
     { header: 'Armada', cell: (item: any) => item.armada?.nopol || '-' },

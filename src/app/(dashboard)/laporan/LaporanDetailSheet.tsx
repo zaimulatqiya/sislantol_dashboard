@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CheckCircle, MapPin, Phone, User, Clock, Image as ImageIcon, XCircle, HardHat, Truck, Zap, X, Loader2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import toast from "react-hot-toast";
+import { getDisplayJenisKejadian, getDisplayDeskripsi } from "@/lib/utils";
 
 interface LaporanDetailSheetProps {
   laporanId: number | null;
@@ -236,11 +237,15 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                       </div>
                       <div className="sm:col-span-2">
                         <div className="text-sm text-gray-500 mb-1">Jenis Kejadian</div>
-                        <div className="font-medium text-gray-900 capitalize px-3 py-1 bg-gray-100 inline-block rounded-md">{laporan.jenis_kejadian}</div>
+                        <div className="font-medium text-gray-900 capitalize px-3 py-1 bg-gray-100 inline-block rounded-md">{getDisplayJenisKejadian(laporan.jenis_kejadian, laporan.deskripsi)}</div>
                       </div>
                       <div className="sm:col-span-2">
                         <div className="text-sm text-gray-500 mb-1">Deskripsi</div>
-                        <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-100">{laporan.deskripsi}</p>
+                        <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                          {getDisplayDeskripsi(laporan.jenis_kejadian, laporan.deskripsi) || (
+                            <span className="italic text-gray-400">Tidak ada deskripsi tambahan.</span>
+                          )}
+                        </p>
                       </div>
 
                       {laporan.foto_urls && laporan.foto_urls.length > 0 && (
