@@ -123,34 +123,11 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
     setIsSubmitting(true);
 
     try {
-      // 1. Update status laporan
-      const { error: errLaporan } = await supabase.from('laporan').update({
-        status: 'ditugaskan',
-        updated_at: new Date().toISOString() 
-      }).eq('id', laporan.id);
+      const { assignPenugasanAction } = await import("@/app/actions/penugasan");
+      const result = await assignPenugasanAction(laporan.id, validUnits, catatan);
 
-      if (errLaporan) throw errLaporan;
-
-      // 2. Insert penugasan
-      const newPenugasan = validUnits.map(u => ({
-        laporan_id: laporan.id,
-        petugas_id: u.petugasId,
-        armada_id: u.armadaId,
-        catatan_admin: catatan,
-        status: 'aktif'
-      }));
-      const { error: errPenugasan } = await supabase.from('penugasan').insert(newPenugasan);
-      
-      if (errPenugasan) throw errPenugasan;
-
-      // 3. Update Armada (menjadi Digunakan)
-      for (const u of validUnits) {
-        await supabase.from('armada').update({ status: 'Digunakan' }).eq('id', u.armadaId);
-      }
-
-      // 4. Update Petugas (menjadi Bertugas)
-      for (const u of validUnits) {
-        await supabase.from('profiles').update({ status_petugas: 'Bertugas' }).eq('id', u.petugasId);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       toast.success("Armada dan Petugas berhasil ditugaskan!");
