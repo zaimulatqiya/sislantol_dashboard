@@ -22,8 +22,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
+import { TableToolbar } from "@/components/shared/TableToolbar";
 
 export default function RiwayatPage() {
+  const [search, setSearch] = useState('');
   const [jenisFilter, setJenisFilter] = useState('semua');
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
@@ -42,6 +44,13 @@ export default function RiwayatPage() {
 
   // Filter Data (hanya yang selesai/ditolak)
   let filteredData = laporanList.filter(l => l.status === 'selesai' || l.status === 'ditolak');
+
+  if (search.trim() !== '') {
+    filteredData = filteredData.filter(l => 
+      (l.pelapor_nama || '').toLowerCase().includes(search.toLowerCase()) ||
+      (l.lokasi || '').toLowerCase().includes(search.toLowerCase())
+    );
+  }
 
   if (jenisFilter !== 'semua') {
     filteredData = filteredData.filter(l => l.jenis_kejadian === jenisFilter);
@@ -125,12 +134,17 @@ export default function RiwayatPage() {
         description="Arsip semua laporan yang telah selesai atau ditolak."
       />
 
-      <div className="flex flex-col sm:flex-row gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+      <TableToolbar
+        searchQuery={search}
+        onSearchChange={(val) => { setSearch(val); setPage(1); }}
+        onRefresh={refetch}
+        searchPlaceholder="Cari nama pelapor atau lokasi..."
+      >
         <Select value={jenisFilter} onValueChange={(val) => { setJenisFilter(val ?? 'semua'); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-[200px] bg-white">
+          <SelectTrigger className="w-full lg:w-[200px] bg-white">
             <SelectValue placeholder="Filter Jenis..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent alignItemWithTrigger={false}>
             <SelectItem value="semua">Semua Kejadian</SelectItem>
             <SelectItem value="mogok">Mogok</SelectItem>
             <SelectItem value="kecelakaan">Kecelakaan</SelectItem>
@@ -138,6 +152,10 @@ export default function RiwayatPage() {
             <SelectItem value="lainnya">Lainnya</SelectItem>
           </SelectContent>
         </Select>
+      </TableToolbar>
+
+      <div className="flex justify-between items-center text-sm font-medium text-gray-500 pb-1 pt-2">
+        <span>Menampilkan <span className="text-gray-900 font-bold">{filteredData.length}</span> riwayat laporan.</span>
       </div>
 
       <DataTable 

@@ -12,6 +12,7 @@ import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
 import { useRealtimePenugasan } from '@/hooks/useRealtimePenugasan';
 import { getDisplayJenisKejadian } from '@/lib/utils';
 import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
+import { TableToolbar } from "@/components/shared/TableToolbar";
 export default function PenugasanPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -21,7 +22,7 @@ export default function PenugasanPage() {
   
   const [selectedLaporanId, setSelectedLaporanId] = useState<number | null>(null);
 
-  const { penugasanList, loading } = useRealtimePenugasan();
+  const { penugasanList, loading, refetch } = useRealtimePenugasan();
 
   if (loading) {
     return <TablePageSkeleton />;
@@ -79,19 +80,14 @@ export default function PenugasanPage() {
         description="Pantau petugas dan armada yang sedang bertugas di lapangan saat ini secara realtime."
       />
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Cari nama petugas atau lokasi..." 
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-9 bg-white"
-          />
-        </div>
-
+      <TableToolbar
+        searchQuery={search}
+        onSearchChange={(val) => { setSearch(val); setPage(1); }}
+        onRefresh={refetch}
+        searchPlaceholder="Cari nama petugas atau lokasi..."
+      >
         <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val ?? 'semua'); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-white">
+          <SelectTrigger className="w-full lg:w-[180px] bg-white">
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -102,7 +98,7 @@ export default function PenugasanPage() {
         </Select>
 
         <Select value={jenisFilter} onValueChange={(val) => { setJenisFilter(val ?? 'semua'); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-white">
+          <SelectTrigger className="w-full lg:w-[180px] bg-white">
             <SelectValue placeholder="Semua Jenis" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -113,6 +109,10 @@ export default function PenugasanPage() {
             <SelectItem value="lainnya">Lainnya</SelectItem>
           </SelectContent>
         </Select>
+      </TableToolbar>
+
+      <div className="flex justify-between items-center text-sm font-medium text-gray-500 pb-1 pt-2">
+        <span>Menampilkan <span className="text-gray-900 font-bold">{filteredData.length}</span> penugasan aktif.</span>
       </div>
 
       {filteredData.length > 0 ? (

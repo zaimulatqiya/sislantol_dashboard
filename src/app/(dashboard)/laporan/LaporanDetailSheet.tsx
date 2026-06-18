@@ -160,7 +160,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                 variant="ghost"
                 size="icon"
                 onClick={() => onOpenChange(false)}
-                className="shrink-0 -ml-2 rounded-full hover:bg-gray-100 mt-1 sm:mt-0"
+                className="shrink-0 -ml-2 rounded-full hover:bg-gray-100 mt-1 sm:mt-0 cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </Button>
@@ -236,7 +236,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                 <DialogContent className="sm:max-w-5xl w-[95vw] bg-transparent border-none shadow-none ring-0 p-0" showCloseButton={false}>
                                   <DialogTitle className="sr-only">Preview Foto Kejadian {idx + 1}</DialogTitle>
 
-                                  <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group">
+                                  <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group cursor-pointer">
                                     <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                     <span className="text-sm font-semibold tracking-wide pr-1">Tutup Preview</span>
                                   </DialogClose>
@@ -261,10 +261,10 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                       <h3 className="text-lg font-semibold text-gray-900">Aksi Verifikasi</h3>
                       <p className="text-sm text-gray-600">Terima dan teruskan laporan ini, atau tolak jika tidak valid (prank).</p>
                       <div className="flex flex-col sm:flex-row gap-3">
-                        <Button disabled={isSubmitting} className="w-full sm:flex-1 bg-green-600 hover:bg-green-700" onClick={() => setIsVerifying(true)}>
+                        <Button disabled={isSubmitting} className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 cursor-pointer" onClick={() => setIsVerifying(true)}>
                           {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />} Verifikasi Laporan
                         </Button>
-                        <Button disabled={isSubmitting} variant="outline" className="w-full sm:flex-1 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setIsRejecting(true)}>
+                        <Button disabled={isSubmitting} variant="outline" className="w-full sm:flex-1 text-red-600 border-red-200 hover:bg-red-50 cursor-pointer" onClick={() => setIsRejecting(true)}>
                           <XCircle className="w-4 h-4 mr-2" /> Tolak Laporan
                         </Button>
                       </div>
@@ -492,7 +492,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                   </DialogTrigger>
                                   <DialogContent className="sm:max-w-5xl w-[95vw] bg-transparent border-none shadow-none ring-0 p-0" showCloseButton={false}>
                                     <DialogTitle className="sr-only">Preview Foto Bukti</DialogTitle>
-                                    <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group">
+                                    <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group cursor-pointer">
                                       <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                       <span className="text-sm font-semibold tracking-wide pr-1">Tutup Preview</span>
                                     </DialogClose>
@@ -548,16 +548,16 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
         open={isRejecting}
         onOpenChange={setIsRejecting}
         title="Tolak Laporan"
-        description={
-          <div className="space-y-4 mt-4 text-left">
-            <p>Masukkan alasan spesifik mengapa laporan ditolak (misal: panggilan palsu, duplikat).</p>
-            <Textarea placeholder="Alasan penolakan..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="resize-none" />
-          </div>
-        }
+        description=""
         onConfirm={handleReject}
         confirmText="Tolak Laporan"
         variant="destructive"
-      />
+      >
+        <div className="space-y-4 mt-4 text-left">
+          <p className="text-sm text-gray-500">Masukkan alasan spesifik mengapa laporan ditolak (misal: panggilan palsu, duplikat).</p>
+          <Textarea placeholder="Alasan penolakan..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="resize-none" />
+        </div>
+      </ConfirmDialog>
     </Sheet>
   );
 }

@@ -20,6 +20,7 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
+  children?: React.ReactNode;
 }
 
 export function ConfirmDialog({
@@ -31,17 +32,21 @@ export function ConfirmDialog({
   onCancel,
   confirmText = "Lanjutkan",
   cancelText = "Batal",
-  variant = 'default'
+  variant = 'default',
+  children
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {description}
-          </AlertDialogDescription>
+          {description && (
+            <AlertDialogDescription>
+              {description}
+            </AlertDialogDescription>
+          )}
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
           <AlertDialogAction 

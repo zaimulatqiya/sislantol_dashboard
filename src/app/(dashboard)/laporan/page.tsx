@@ -12,6 +12,7 @@ import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { LaporanDetailSheet } from './LaporanDetailSheet';
 import { getDisplayJenisKejadian } from '@/lib/utils';
 import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
+import { TableToolbar } from "@/components/shared/TableToolbar";
 export default function LaporanPage() {
   const [selectedLaporanId, setSelectedLaporanId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -29,8 +30,8 @@ export default function LaporanPage() {
 
   // Filter Data (Hanya tampilkan yang belum ditugaskan/diproses/selesai jika tidak difilter spesifik)
   const filteredData = laporanList.filter(item => {
-    // Secara default (jika filter 'semua'), sembunyikan laporan yang sudah masuk penugasan
-    if (statusFilter === 'semua' && ["ditugaskan", "proses", "selesai"].includes(item.status)) {
+    // Secara default (jika filter 'semua'), sembunyikan laporan yang sudah masuk penugasan atau ditolak
+    if (statusFilter === 'semua' && ["ditugaskan", "proses", "selesai", "ditolak"].includes(item.status)) {
       return false;
     }
 
@@ -81,19 +82,14 @@ export default function LaporanPage() {
         description="Pantau secara realtime laporan kejadian dari pengguna jalan."
       />
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Cari nama pelapor..." 
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-9 bg-gray-50 border-gray-200"
-          />
-        </div>
-        
+      <TableToolbar
+        searchQuery={search}
+        onSearchChange={(val) => { setSearch(val); setPage(1); }}
+        onRefresh={refetch}
+        searchPlaceholder="Cari nama pelapor atau lokasi..."
+      >
         <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val ?? "semua"); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-gray-50 border-gray-200">
+          <SelectTrigger className="w-full lg:w-[180px] bg-white">
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -108,7 +104,7 @@ export default function LaporanPage() {
         </Select>
 
         <Select value={jenisFilter} onValueChange={(val) => { setJenisFilter(val ?? "semua"); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-gray-50 border-gray-200">
+          <SelectTrigger className="w-full lg:w-[180px] bg-white">
             <SelectValue placeholder="Semua Jenis" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -119,6 +115,10 @@ export default function LaporanPage() {
             <SelectItem value="lainnya">Lainnya</SelectItem>
           </SelectContent>
         </Select>
+      </TableToolbar>
+
+      <div className="flex justify-between items-center text-sm font-medium text-gray-500 pb-1 pt-2">
+        <span>Menampilkan <span className="text-gray-900 font-bold">{sortedData.length}</span> laporan.</span>
       </div>
 
       {sortedData.length > 0 ? (

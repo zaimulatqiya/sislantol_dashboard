@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
+import { TableToolbar } from "@/components/shared/TableToolbar";
 
 export default function PetugasPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -196,19 +197,14 @@ export default function PetugasPage() {
         description="Kelola akun dan status operasional petugas lapangan."
       />
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Cari nama petugas..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-9 bg-white"
-          />
-        </div>
-
+      <TableToolbar
+        searchQuery={search}
+        onSearchChange={setSearch}
+        onRefresh={refetch}
+        searchPlaceholder="Cari nama atau telepon..."
+      >
         <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val ?? 'semua'); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-white">
+          <SelectTrigger className="w-full lg:w-[180px] bg-white">
             <SelectValue placeholder="Semua Status" />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>
@@ -220,7 +216,7 @@ export default function PetugasPage() {
         </Select>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger render={<Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 shrink-0" />}>
+          <DialogTrigger render={<Button className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 shrink-0" />}>
             <Plus className="w-4 h-4 mr-2" /> Tambah Petugas
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
@@ -254,7 +250,7 @@ export default function PetugasPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </TableToolbar>
 
       <div className="flex justify-between items-center text-sm font-medium text-gray-500 pb-1">
         <span>Menampilkan <span className="text-gray-900 font-bold">{filteredData.length}</span> petugas.</span>

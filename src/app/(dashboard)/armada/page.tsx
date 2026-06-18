@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
+import { TableToolbar } from "@/components/shared/TableToolbar";
 
 export default function ArmadaPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -191,17 +192,12 @@ export default function ArmadaPage() {
         description="Kelola kendaraan derek dan patroli yang terhubung langsung dengan database."
       />
 
-      <div className="flex flex-col lg:flex-row gap-4 items-center bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            placeholder="Cari nama, nopol, atau pos..." 
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-9 bg-white"
-          />
-        </div>
-
+      <TableToolbar
+        searchQuery={search}
+        onSearchChange={setSearch}
+        onRefresh={refetch}
+        searchPlaceholder="Cari plat nomor atau driver..."
+      >
         <Select
           value={jenisFilter}
           onValueChange={(val) => {
@@ -258,7 +254,7 @@ export default function ArmadaPage() {
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih Jenis" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent alignItemWithTrigger={false}>
                     <SelectItem value="derek">Derek</SelectItem>
                     <SelectItem value="patroli">Patroli</SelectItem>
                     <SelectItem value="towing">Towing</SelectItem>
@@ -280,7 +276,7 @@ export default function ArmadaPage() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </TableToolbar>
 
       <div className="flex justify-between items-center text-sm font-medium text-gray-500 pb-1">
         <span>Menampilkan <span className="text-gray-900 font-bold">{filteredData.length}</span> armada.</span>

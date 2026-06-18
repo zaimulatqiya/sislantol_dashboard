@@ -19,25 +19,25 @@ export function useRealtimePenugasan() {
   const [penugasanList, setPenugasanList] = useState<PenugasanWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchInitial = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('penugasan')
+      .select(`
+        *,
+        laporan (*),
+        petugas:profiles (*),
+        armada (*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setPenugasanList(data);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    // 1. Fetch data awal
-    const fetchInitial = async () => {
-      const { data, error } = await supabase
-        .from('penugasan')
-        .select(`
-          *,
-          laporan (*),
-          petugas:profiles (*),
-          armada (*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        setPenugasanList(data);
-      }
-      setLoading(false);
-    };
-
     fetchInitial();
 
     // 2. Subscribe realtime
@@ -47,8 +47,6 @@ export function useRealtimePenugasan() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'penugasan' },
         async (payload) => {
-          // Ketika ada perubahan, fetch ulang agar relasi (JOIN) ikut ter-update
-          // Ini cara termudah dan teraman untuk memastikan data relasi (petugas/armada/laporan) sinkron
           fetchInitial();
         }
       )
@@ -59,5 +57,5 @@ export function useRealtimePenugasan() {
     };
   }, []);
 
-  return { penugasanList, loading };
+  return { penugasanList, loading, refetch: fetchInitial };
 }

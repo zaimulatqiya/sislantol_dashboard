@@ -67,13 +67,19 @@ export default function DashboardPage() {
         <PageHeader title="Hello, Admin!" />
       </div>
 
-      <div className="bg-blue-50/80 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+      <div className="bg-blue-50/80 border border-blue-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-sm font-medium text-blue-800">
-          <TrendingUp className="w-5 h-5 text-blue-600" /> Dashboard ini sudah terhubung secara Live ke Supabase!
+          <span className="relative flex h-3 w-3 mr-1">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+          </span>
+          Sistem pemantauan beroperasi penuh. Seluruh data diperbarui secara real-time.
         </div>
-        <Button variant="outline" className="rounded-full bg-white border-blue-200 shadow-sm text-xs font-semibold text-blue-700 hover:bg-blue-50">
-          Tugas Aktif &nearr;
-        </Button>
+        <Link href="/penugasan" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto rounded-full bg-white border-blue-200 shadow-sm text-xs font-semibold text-blue-700 hover:bg-blue-50 cursor-pointer">
+            Pantau Lapangan <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
