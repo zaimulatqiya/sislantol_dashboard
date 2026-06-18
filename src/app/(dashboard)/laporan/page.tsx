@@ -11,7 +11,7 @@ import { Eye, Search, FileText, RefreshCw } from 'lucide-react';
 import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { LaporanDetailSheet } from './LaporanDetailSheet';
 import { getDisplayJenisKejadian } from '@/lib/utils';
-
+import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
 export default function LaporanPage() {
   const [selectedLaporanId, setSelectedLaporanId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -24,12 +24,7 @@ export default function LaporanPage() {
   const { laporanList, loading, refetch } = useRealtimeLaporan();
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
-        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-        <p className="text-gray-500 font-medium">Memuat data laporan realtime...</p>
-      </div>
-    );
+    return <TablePageSkeleton />;
   }
 
   // Filter Data (Hanya tampilkan yang belum ditugaskan/diproses/selesai jika tidak difilter spesifik)

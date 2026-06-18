@@ -13,7 +13,7 @@ import { useState, useEffect } from "react";
 import { Petugas } from "@/types";
 import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { useRealtimePetugas } from "@/hooks/useRealtimePetugas";
-
+import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";
 export default function DashboardPage() {
   const [timeRange, setTimeRange] = useState("Week");
   
@@ -22,19 +22,31 @@ export default function DashboardPage() {
   const { petugasList, loading: loadingPetugas } = useRealtimePetugas();
 
   if (loadingLaporan || loadingPetugas) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
-        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-        <p className="text-gray-500 font-medium">Menghubungkan ke Supabase (Realtime)...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
-  // Stats calculation (dari data live Supabase)
-  const totalLaporan = laporanList.length;
-  const menungguCount = laporanList.filter((l) => l.status === "menunggu").length;
-  const prosesCount = laporanList.filter((l) => l.status === "proses").length;
-  const selesaiCount = laporanList.filter((l) => l.status === "selesai").length;
+  // Filter laporan berdasarkan timeRange
+  const now = new Date();
+  const filteredLaporan = laporanList.filter((l) => {
+    const reportDate = new Date(l.created_at);
+    if (timeRange === "Day") {
+      return reportDate.toDateString() === now.toDateString();
+    } else if (timeRange === "Week") {
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return reportDate >= oneWeekAgo;
+    } else if (timeRange === "Month") {
+      return reportDate.getMonth() === now.getMonth() && reportDate.getFullYear() === now.getFullYear();
+    } else if (timeRange === "Year") {
+      return reportDate.getFullYear() === now.getFullYear();
+    }
+    return true;
+  });
+
+  // Stats calculation (dari data live Supabase + Filter Waktu)
+  const totalLaporan = filteredLaporan.length;
+  const menungguCount = filteredLaporan.filter((l) => l.status === "menunggu").length;
+  const prosesCount = filteredLaporan.filter((l) => l.status === "proses").length;
+  const selesaiCount = filteredLaporan.filter((l) => l.status === "selesai").length;
 
   // Laporan Terbaru (Top 5)
   const recentReports = [...laporanList]

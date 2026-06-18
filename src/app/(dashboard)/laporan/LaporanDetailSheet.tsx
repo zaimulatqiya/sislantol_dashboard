@@ -15,7 +15,7 @@ import { CheckCircle, MapPin, Phone, User, Clock, Image as ImageIcon, XCircle, H
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import toast from "react-hot-toast";
 import { getDisplayJenisKejadian, getDisplayDeskripsi } from "@/lib/utils";
-
+import { SheetDetailSkeleton } from "@/components/shared/SkeletonLoaders";
 interface LaporanDetailSheetProps {
   laporanId: number | null;
   open: boolean;
@@ -152,10 +152,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent showCloseButton={false} className="w-full !max-w-[50vw] sm:w-[50vw] overflow-y-auto bg-gray-50/50 p-0 sm:p-0">
         {isLoading || !laporan ? (
-          <div className="flex flex-col items-center justify-center h-full space-y-3">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-gray-500">Memuat detail dari Supabase...</p>
-          </div>
+          <SheetDetailSkeleton />
         ) : (
           <div className="flex flex-col h-full bg-white">
             <SheetHeader className="p-4 sm:p-6 border-b border-gray-100 bg-white sticky top-0 z-10 flex flex-row items-start sm:items-center gap-4">

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
 import { useRealtimePenugasan } from '@/hooks/useRealtimePenugasan';
 import { getDisplayJenisKejadian } from '@/lib/utils';
-
+import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
 export default function PenugasanPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -24,12 +24,7 @@ export default function PenugasanPage() {
   const { penugasanList, loading } = useRealtimePenugasan();
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
-        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-        <p className="text-gray-500 font-medium">Memuat data penugasan realtime...</p>
-      </div>
-    );
+    return <TablePageSkeleton />;
   }
 
   // Filter Data

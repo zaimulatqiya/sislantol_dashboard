@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { TablePageSkeleton } from "@/components/shared/SkeletonLoaders";
 
 export default function PetugasPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -167,12 +168,7 @@ export default function PetugasPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
-        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-        <p className="text-gray-500 font-medium">Memuat data petugas realtime...</p>
-      </div>
-    );
+    return <TablePageSkeleton />;
   }
 
   const filteredData = petugasList.filter((item) => {

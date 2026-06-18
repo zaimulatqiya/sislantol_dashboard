@@ -58,11 +58,9 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             <div className="w-10 h-10 min-w-[40px] rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100">
               <Truck className="w-5 h-5 text-black" />
             </div>
-            {(!isCollapsed || isMobile) && (
-              <div className="flex flex-col whitespace-nowrap opacity-100 transition-opacity duration-300">
-                <span className="text-[17px] font-bold tracking-tight text-black leading-none">Jasa Marga Ops</span>
-              </div>
-            )}
+            <div className={cn("flex flex-col whitespace-nowrap overflow-hidden transition-all duration-300", (isCollapsed && !isMobile) ? "w-0 opacity-0" : "w-32 opacity-100")}>
+              <span className="text-[17px] font-bold tracking-tight text-black leading-none">Jasa Marga Ops</span>
+            </div>
           </div>
           
           {(!isCollapsed || isMobile) && (
@@ -88,9 +86,9 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       <div className="flex-1 overflow-y-auto py-2">
         <nav className="space-y-1.5 px-3">
-          {(!isCollapsed || isMobile) && (
-            <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 mt-4">Menu</p>
-          )}
+          <div className={cn("transition-all duration-300 overflow-hidden", (isCollapsed && !isMobile) ? "h-0 opacity-0 mb-0" : "h-auto opacity-100 mb-3 mt-4")}>
+            <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-widest">Menu</p>
+          </div>
           {MENU_ITEMS.map((item) => {
             const isActive = pathname.startsWith(item.path);
             const collapsed = isCollapsed && !isMobile;
@@ -101,15 +99,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 onClick={() => setIsMobileOpen(false)}
                 title={collapsed ? item.name : ""}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-[18px] text-[15px] font-semibold transition-all duration-200",
+                  "flex items-center px-3 py-3 rounded-[18px] text-[15px] font-semibold transition-all duration-300",
                   isActive 
                     ? "bg-white text-black shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]" 
                     : "text-gray-500 hover:bg-gray-100 hover:text-black",
-                  collapsed && "justify-center px-0 h-12 w-12 mx-auto"
+                  collapsed ? "justify-center px-0 h-12 w-12 mx-auto gap-0" : "gap-3"
                 )}
               >
-                <item.icon className={cn("w-5 h-5 min-w-[20px]", isActive ? "text-black" : "text-gray-400")} />
-                {!collapsed && <span className="whitespace-nowrap">{item.name}</span>}
+                <item.icon className={cn("w-5 h-5 min-w-[20px] transition-colors", isActive ? "text-black" : "text-gray-400")} />
+                <span className={cn("whitespace-nowrap transition-all duration-300 overflow-hidden", collapsed ? "w-0 opacity-0" : "w-full opacity-100")}>{item.name}</span>
               </Link>
             );
           })}
@@ -122,8 +120,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         "rounded-lg bg-white shadow-sm border border-gray-100 flex flex-col gap-3"
       )}>
          <Link href="/profil" className={cn(
-           "flex items-center gap-3 px-2 py-1 hover:bg-gray-50 rounded-xl transition-colors",
-           (isCollapsed && !isMobile) && "justify-center"
+           "flex items-center px-2 py-1 hover:bg-gray-50 rounded-xl transition-all duration-300",
+           (isCollapsed && !isMobile) ? "justify-center gap-0" : "gap-3"
          )}>
             <div className="w-10 h-10 min-w-[40px] rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100 overflow-hidden shadow-sm">
               {user?.profileImage ? (
@@ -132,23 +130,21 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 user?.nama?.charAt(0) || 'A'
               )}
             </div>
-            {(!isCollapsed || isMobile) && (
-              <div className="overflow-hidden">
-                <p className="text-sm font-bold text-gray-900 truncate">{user?.nama}</p>
-                <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
-              </div>
-            )}
+            <div className={cn("overflow-hidden transition-all duration-300 whitespace-nowrap", (isCollapsed && !isMobile) ? "w-0 opacity-0" : "w-[120px] opacity-100")}>
+              <p className="text-sm font-bold text-gray-900 truncate">{user?.nama}</p>
+              <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
+            </div>
          </Link>
          <button
           onClick={logout}
           title={(isCollapsed && !isMobile) ? "Log out" : ""}
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 w-full rounded-2xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors",
-            (isCollapsed && !isMobile) && "justify-center"
+            "flex items-center px-3 py-2.5 w-full rounded-2xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-300",
+            (isCollapsed && !isMobile) ? "justify-center gap-0" : "gap-3"
           )}
         >
           <LogOut className="w-4 h-4 min-w-[16px]" />
-          {(!isCollapsed || isMobile) && <span>Log out</span>}
+          <span className={cn("whitespace-nowrap transition-all duration-300 overflow-hidden", (isCollapsed && !isMobile) ? "w-0 opacity-0" : "w-full opacity-100")}>Log out</span>
         </button>
       </div>
     </div>
@@ -179,7 +175,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       )}
 
       <div className={cn(
-        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-30 transition-all duration-300 ease-in-out",
+        "hidden lg:flex lg:flex-col lg:sticky lg:top-0 lg:h-screen z-30 transition-all duration-300 ease-in-out shrink-0",
         isCollapsed ? "lg:w-20" : "lg:w-72"
       )}>
         <SidebarContent />
