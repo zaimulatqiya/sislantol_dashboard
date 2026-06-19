@@ -49,22 +49,29 @@
 }
 
 :root {
-  --background: oklch(0.985 0 0); /* Very light gray / off-white #FAFAFA */
-  --foreground: oklch(0.145 0 0); /* Very dark gray #1A1A1A */
-  --card: oklch(1 0 0); /* Pure White */
+  --background: oklch(0.985 0 0);
+  /* Very light gray / off-white #FAFAFA */
+  --foreground: oklch(0.145 0 0);
+  /* Very dark gray #1A1A1A */
+  --card: oklch(1 0 0);
+  /* Pure White */
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0 0 0); /* Pure Black */
-  --primary-foreground: oklch(1 0 0); /* Pure White */
-  --secondary: oklch(0.96 0 0); /* Light gray for secondary elements */
+  --primary: oklch(0 0 0);
+  /* Pure Black */
+  --primary-foreground: oklch(1 0 0);
+  /* Pure White */
+  --secondary: oklch(0.96 0 0);
+  /* Light gray for secondary elements */
   --secondary-foreground: oklch(0.145 0 0);
   --muted: oklch(0.96 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.96 0 0);
   --accent-foreground: oklch(0.145 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.95 0 0); /* Subtle border */
+  --border: oklch(0.95 0 0);
+  /* Subtle border */
   --input: oklch(0.92 0 0);
   --ring: oklch(0.2 0 0);
   --chart-1: oklch(0.87 0 0);
@@ -72,12 +79,16 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 1.25rem; /* 20px - Extremely rounded look */
-  --sidebar: oklch(0.97 0 0); /* Very soft gray */
+  --radius: 1.25rem;
+  /* 20px - Extremely rounded look */
+  --sidebar: oklch(0.97 0 0);
+  /* Very soft gray */
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0 0 0); /* Pure Black */
+  --sidebar-primary: oklch(0 0 0);
+  /* Pure Black */
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(1 0 0); /* White pill on active */
+  --sidebar-accent: oklch(1 0 0);
+  /* White pill on active */
   --sidebar-accent-foreground: oklch(0 0 0);
   --sidebar-border: oklch(0.95 0 0);
   --sidebar-ring: oklch(0.2 0 0);
@@ -121,9 +132,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }

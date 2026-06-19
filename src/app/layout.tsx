@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { GlobalOfflineBanner } from "@/components/shared/GlobalOfflineBanner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="id">
       <body className={`${inter.variable} font-sans antialiased bg-gray-50 text-slate-900`}>
         <AuthProvider>
+          <GlobalOfflineBanner />
           {children}
           <Toaster position="bottom-center" toastOptions={{ className: 'text-sm font-medium' }} />
         </AuthProvider>
