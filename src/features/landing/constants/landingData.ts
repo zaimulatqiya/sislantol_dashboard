@@ -8,7 +8,7 @@ export const landingData = {
     badgeText: "Sistem Layanan Darurat & Patroli",
     title: "Layanan Cepat Tanggap\nJalan Tol Surabaya–Gempol",
     subtitle: "Platform terintegrasi untuk pengelolaan insiden, pemantauan patroli, dan layanan derek demi keselamatan dan kenyamanan pengguna jalan tol.",
-    primaryButtonText: "Akses Dashboard",
+    primaryButtonText: "Pantau Operasional",
     primaryButtonLink: "/dashboard",
 
     previewImage: "/assets/dashboard-preview.png",
