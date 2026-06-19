@@ -1,7 +1,7 @@
 export const landingData = {
   header: {
     logoText: "JASAMARGA",
-    loginButtonText: "Login Petugas",
+    loginButtonText: "Login Admin",
     loginLink: "/login",
   },
   hero: {

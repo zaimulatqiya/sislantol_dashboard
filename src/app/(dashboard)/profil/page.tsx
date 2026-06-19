@@ -128,7 +128,7 @@ export default function ProfilPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
       <PageHeader 
-        title="Profil Pengguna" 
+        title="Profil Admin" 
         description="Kelola informasi akun dan keamanan Anda."
       />
 
