@@ -20,29 +20,39 @@ export function useRealtimePenugasan() {
   const [loading, setLoading] = useState(true);
 
   const fetchInitial = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('penugasan')
-      .select(`
-        *,
-        laporan (*),
-        petugas:profiles (*),
-        armada (*)
-      `)
-      .order('created_at', { ascending: false });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('penugasan')
+        .select(`
+          *,
+          laporan (*),
+          petugas:profiles (*),
+          armada (*)
+        `)
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setPenugasanList(data);
+      if (error) {
+        console.error("Supabase Error (penugasan):", error);
+        return;
+      }
+      if (data) {
+        setPenugasanList(data);
+      }
+    } catch (err) {
+      console.error("Fetch Exception (penugasan):", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchInitial();
 
     // 2. Subscribe realtime
+    const channelId = `penugasan-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('penugasan-realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'penugasan' },

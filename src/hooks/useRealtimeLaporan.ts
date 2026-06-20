@@ -24,30 +24,41 @@ export function useRealtimeLaporan() {
   const [loading, setLoading] = useState(true);
 
   const fetchInitial = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('laporan')
-      .select(`
-        *,
-        penugasan (
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('laporan')
+        .select(`
           *,
-          petugas:profiles (*)
-        )
-      `)
-      .order('created_at', { ascending: false });
+          penugasan (
+            *,
+            petugas:profiles (*)
+          )
+        `)
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setLaporanList(data);
+      if (error) {
+        console.error("Supabase Error (laporan):", error);
+        return;
+      }
+      
+      if (data) {
+        setLaporanList(data);
+      }
+    } catch (err) {
+      console.error("Fetch Exception (laporan):", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchInitial();
 
     // 2. Subscribe realtime untuk perubahan
+    const channelId = `laporan-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('laporan-realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {

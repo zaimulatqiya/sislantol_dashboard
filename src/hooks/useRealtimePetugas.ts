@@ -19,23 +19,35 @@ export function useRealtimePetugas() {
   const [loading, setLoading] = useState(true);
 
   const fetchInitial = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'petugas')
-      .order('nama', { ascending: true });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'petugas')
+        .order('nama', { ascending: true });
 
-    if (!error && data) {
-      setPetugasList(data);
+      if (error) {
+        console.error("Supabase Error (petugas):", error);
+        return;
+      }
+      
+      if (data) {
+        setPetugasList(data);
+      }
+    } catch (err) {
+      console.error("Fetch Exception (petugas):", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchInitial();
 
+    const channelId = `petugas-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('petugas-realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles' },

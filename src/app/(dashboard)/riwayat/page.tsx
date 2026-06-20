@@ -11,6 +11,7 @@ import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
 import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { supabase } from '@/lib/supabase';
 import { getDisplayJenisKejadian } from '@/lib/utils';
+import toast from 'react-hot-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,20 +65,36 @@ export default function RiwayatPage() {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     
-    // Hard delete directly from Supabase
-    const { error } = await supabase
-      .from('laporan')
-      .delete()
-      .eq('id', deleteConfirmId);
+    try {
+      // 1. Hapus penugasan terkait terlebih dahulu untuk menghindari Foreign Key Constraint error
+      const { error: errPenugasan } = await supabase
+        .from('penugasan')
+        .delete()
+        .eq('laporan_id', deleteConfirmId);
+        
+      if (errPenugasan) {
+        throw new Error("Gagal menghapus penugasan terkait: " + errPenugasan.message);
+      }
+
+      // 2. Hard delete laporan directly from Supabase
+      const { error } = await supabase
+        .from('laporan')
+        .delete()
+        .eq('id', deleteConfirmId);
+        
+      if (error) {
+        throw new Error("Gagal menghapus laporan: " + error.message);
+      }
       
-    if (!error) {
+      toast.success("Riwayat laporan berhasil dimusnahkan.");
       refetch();
-    } else {
-      console.error("Gagal menghapus permanen", error);
+      setDeleteConfirmId(null);
+    } catch (error: any) {
+      console.error("Exception saat menghapus permanen:", error);
+      toast.error(error.message || "Terjadi kesalahan jaringan.");
+    } finally {
+      setIsDeleting(false);
     }
-    
-    setIsDeleting(false);
-    setDeleteConfirmId(null);
   };
 
   const columns = [
@@ -109,7 +126,7 @@ export default function RiwayatPage() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
             onClick={() => setSelectedLaporanId(item.id)}
           >
             <Eye className="h-4 w-4" />
@@ -117,7 +134,7 @@ export default function RiwayatPage() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
             onClick={() => setDeleteConfirmId(item.id)}
           >
             <Trash2 className="h-4 w-4" />
@@ -178,25 +195,27 @@ export default function RiwayatPage() {
 
       {/* AlertDialog for Hard Delete Confirmation */}
       <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-        <AlertDialogContent className="rounded-2xl border-red-100">
+        <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
-            <div className="mx-auto bg-red-100 p-3 rounded-full mb-4 w-fit">
-              <Trash2 className="w-6 h-6 text-red-600" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-red-100 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <AlertDialogTitle className="text-xl">Hapus Permanen?</AlertDialogTitle>
             </div>
-            <AlertDialogTitle className="text-center text-xl text-red-700">Hapus Permanen?</AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-gray-600 mt-2">
-              Tindakan ini akan memusnahkan riwayat laporan ini dari database Supabase secara permanen. Tindakan ini <b>TIDAK BISA DIBATALKAN</b>.
+            <AlertDialogDescription className="text-gray-600 text-base">
+              Tindakan ini akan memusnahkan riwayat laporan ini dari database secara permanen. Tindakan ini <strong>TIDAK BISA DIBATALKAN</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="mt-6 flex sm:justify-center gap-3">
-            <AlertDialogCancel className="mt-0 w-full sm:w-32 border-gray-200">Batal</AlertDialogCancel>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel disabled={isDeleting} className="cursor-pointer">Batal</AlertDialogCancel>
             <AlertDialogAction 
               onClick={(e) => {
                 e.preventDefault();
                 handleHardDelete();
               }} 
-              className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto px-6"
               disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 cursor-pointer"
             >
               {isDeleting ? "Menghapus..." : "Ya, Musnahkan Data"}
             </AlertDialogAction>

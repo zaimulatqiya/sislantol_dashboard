@@ -83,31 +83,53 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
 
   const handleVerify = async () => {
     setIsSubmitting(true);
-    await supabase.from('laporan').update({ status: 'diverifikasi', updated_at: new Date().toISOString() }).eq('id', laporanId);
-    
-    // Perbarui state lokal agar UI langsung berubah ke form penugasan
-    if (laporan) {
-      setLaporan({ ...laporan, status: 'diverifikasi' });
+    try {
+      const updatePromise = supabase.from('laporan').update({ status: 'diverifikasi', updated_at: new Date().toISOString() }).eq('id', laporanId);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Koneksi ke database terputus (Timeout 10 detik).")), 10000)
+      );
+
+      const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+      if (error) throw error;
+
+      if (laporan) {
+        setLaporan({ ...laporan, status: 'diverifikasi' });
+      }
+      
+      toast.success("Laporan berhasil diverifikasi. Silakan tugaskan unit.");
+      if (onSuccess) onSuccess();
+    } catch (error: any) {
+      toast.error("Gagal verifikasi: " + error.message);
+    } finally {
+      setIsVerifying(false);
+      setIsSubmitting(false);
     }
-    
-    setIsVerifying(false);
-    setIsSubmitting(false);
-    
-    toast.success("Laporan berhasil diverifikasi. Silakan tugaskan unit.");
-    if (onSuccess) onSuccess();
   };
 
   const handleReject = async () => {
     setIsSubmitting(true);
-    await supabase.from('laporan').update({ 
-      status: 'ditolak', 
-      alasan_tolak: rejectReason,
-      updated_at: new Date().toISOString() 
-    }).eq('id', laporanId);
-    setIsRejecting(false);
-    setIsSubmitting(false);
-    onOpenChange(false);
-    if (onSuccess) onSuccess();
+    try {
+      const updatePromise = supabase.from('laporan').update({ 
+        status: 'ditolak', 
+        alasan_tolak: rejectReason,
+        updated_at: new Date().toISOString() 
+      }).eq('id', laporanId);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Koneksi ke database terputus (Timeout 10 detik).")), 10000)
+      );
+
+      const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+      if (error) throw error;
+
+      toast.success("Laporan berhasil ditolak.");
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
+    } catch (error: any) {
+      toast.error("Gagal menolak laporan: " + error.message);
+    } finally {
+      setIsRejecting(false);
+      setIsSubmitting(false);
+    }
   };
 
   const handleAssign = async (e: React.FormEvent) => {
@@ -124,7 +146,13 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
 
     try {
       const { assignPenugasanAction } = await import("@/app/actions/penugasan");
-      const result = await assignPenugasanAction(laporan.id, validUnits, catatan);
+      
+      const assignPromise = assignPenugasanAction(laporan.id, validUnits, catatan);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Server tidak merespon (Timeout 10 detik).")), 10000)
+      );
+
+      const result = await Promise.race([assignPromise, timeoutPromise]) as any;
 
       if (!result.success) {
         throw new Error(result.error);

@@ -18,22 +18,33 @@ export function useRealtimeArmada() {
   const [loading, setLoading] = useState(true);
 
   const fetchInitial = async () => {
-    const { data, error } = await supabase
-      .from('armada')
-      .select('*')
-      .order('nama_armada', { ascending: true });
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('armada')
+        .select('*')
+        .order('nama_armada', { ascending: true });
 
-    if (!error && data) {
-      setArmadaList(data);
+      if (error) {
+        console.error("Supabase Error (armada):", error);
+        return;
+      }
+      if (data) {
+        setArmadaList(data);
+      }
+    } catch (err) {
+      console.error("Fetch Exception (armada):", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchInitial();
 
+    const channelId = `armada-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('armada-realtime')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'armada' },

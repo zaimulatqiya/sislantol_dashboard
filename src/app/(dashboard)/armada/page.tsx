@@ -81,10 +81,10 @@ export default function ArmadaPage() {
       header: "Aksi",
       cell: (item: ArmadaDB) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" onClick={() => handleEditClick(item)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 cursor-pointer" onClick={() => handleEditClick(item)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50" onClick={() => setDeleteId(item.id)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 cursor-pointer" onClick={() => setDeleteId(item.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -110,13 +110,22 @@ export default function ArmadaPage() {
     setIsSubmitting(true);
     
     try {
-      await supabase.from("armada").update({
+      // Proteksi Anti-Stuck: Beri batas waktu maksimal 10 detik untuk Supabase merespon
+      const updatePromise = supabase.from("armada").update({
         nama_armada: editFormData.nama,
         jenis: editFormData.jenis,
         nopol: editFormData.nopol,
         pos: editFormData.pos,
         status: editFormData.status,
       }).eq("id", editId);
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Koneksi ke database terputus atau sangat lambat (Timeout 10 detik).")), 10000)
+      );
+
+      const { error } = await Promise.race([updatePromise, timeoutPromise]) as any;
+
+      if (error) throw error;
 
       toast.success("Data armada berhasil diperbarui");
       setIsEditOpen(false);
@@ -133,7 +142,14 @@ export default function ArmadaPage() {
     if (!deleteId) return;
     setIsDeleting(true);
     try {
-      await supabase.from("armada").delete().eq("id", deleteId);
+      const deletePromise = supabase.from("armada").delete().eq("id", deleteId);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Koneksi ke database terputus (Timeout 10 detik).")), 10000)
+      );
+
+      const { error } = await Promise.race([deletePromise, timeoutPromise]) as any;
+      if (error) throw error;
+      
       toast.success("Armada berhasil dihapus");
       setDeleteId(null);
       refetch();
@@ -149,13 +165,21 @@ export default function ArmadaPage() {
     setIsSubmitting(true);
 
     try {
-      await supabase.from("armada").insert({
+      const insertPromise = supabase.from("armada").insert({
         nama_armada: formData.nama,
         jenis: formData.jenis,
         nopol: formData.nopol,
         pos: formData.pos,
         status: "Tersedia",
       });
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Koneksi ke database terputus (Timeout 10 detik).")), 10000)
+      );
+
+      const { error } = await Promise.race([insertPromise, timeoutPromise]) as any;
+
+      if (error) throw error;
 
       toast.success("Armada baru berhasil ditambahkan!");
       setIsAddOpen(false);
@@ -236,7 +260,7 @@ export default function ArmadaPage() {
         </Select>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger render={<Button className="w-full lg:w-auto shrink-0 bg-blue-600 hover:bg-blue-700" />}>
+          <DialogTrigger render={<Button className="w-full lg:w-auto shrink-0 bg-blue-600 hover:bg-blue-700 cursor-pointer" />}>
             <Plus className="w-4 h-4 mr-2" /> Tambah Armada
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
@@ -251,7 +275,7 @@ export default function ArmadaPage() {
               <div className="space-y-2">
                 <Label htmlFor="jenis">Jenis</Label>
                 <Select value={formData.jenis} onValueChange={(val: any) => setFormData({ ...formData, jenis: val })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih Jenis" />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>
@@ -270,7 +294,7 @@ export default function ArmadaPage() {
                 <Label htmlFor="pos">Pos / Lokasi</Label>
                 <Input id="pos" required value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Contoh: Pos 1 Waru" />
               </div>
-              <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+              <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 {isSubmitting ? "Menyimpan..." : "Simpan Armada"}
               </Button>
             </form>
@@ -305,10 +329,10 @@ export default function ArmadaPage() {
             <div className="space-y-2">
               <Label htmlFor="edit-jenis">Jenis</Label>
               <Select value={editFormData.jenis} onValueChange={(val: any) => setEditFormData({ ...editFormData, jenis: val })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Jenis" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent alignItemWithTrigger={false}>
                   <SelectItem value="derek">Derek</SelectItem>
                   <SelectItem value="patroli">Patroli</SelectItem>
                   <SelectItem value="towing">Towing</SelectItem>
@@ -327,18 +351,22 @@ export default function ArmadaPage() {
             <div className="space-y-2">
               <Label htmlFor="edit-status">Status</Label>
               <Select value={editFormData.status} onValueChange={(val: any) => setEditFormData({ ...editFormData, status: val })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent alignItemWithTrigger={false}>
                   <SelectItem value="Tersedia">Tersedia</SelectItem>
                   <SelectItem value="Digunakan">Digunakan</SelectItem>
                   <SelectItem value="Dalam Perbaikan">Dalam Perbaikan</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
-              {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Simpan Perubahan"}
+            <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 cursor-pointer">
+              {isSubmitting ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...
+                </div>
+              ) : "Simpan Perubahan"}
             </Button>
           </form>
         </DialogContent>
@@ -358,13 +386,17 @@ export default function ArmadaPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting} className='cursor-pointer'>Batal</AlertDialogCancel>
             <AlertDialogAction 
               onClick={(e) => { e.preventDefault(); handleDelete(); }} 
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 cursor-pointer"
             >
-              {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Ya, Hapus Data"}
+              {isDeleting ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menghapus...
+                </div>
+              ) : "Ya, Hapus Data"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

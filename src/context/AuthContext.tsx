@@ -95,10 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading) {
-      if (!user && pathname !== '/login') {
+      // Daftar halaman yang bebas diakses tanpa perlu login
+      const publicPaths = ['/login', '/'];
+      
+      if (!user && !publicPaths.includes(pathname)) {
         router.push('/login');
       } else if (user && pathname === '/login') {
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }
     }
   }, [user, isLoading, pathname, router]);

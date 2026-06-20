@@ -14,7 +14,7 @@ export function Navbar() {
     <header className="sticky top-0 z-20 flex h-20 shrink-0 items-center gap-x-4 bg-white/90 backdrop-blur-md px-4 sm:gap-x-6 sm:px-8 lg:px-12 pt-4">
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 items-center justify-end">
         <div className="flex items-center gap-x-4 lg:gap-x-6 ml-auto">
-          <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-black hover:bg-gray-100 rounded-full w-10 h-10">
+          <Button disabled variant="ghost" size="icon" className="relative text-gray-600 hover:text-black hover:bg-gray-100 rounded-full w-10 h-10">
             <span className="sr-only">View notifications</span>
             <Bell className="h-5 w-5" aria-hidden="true" />
             {pendingCount > 0 && (

@@ -40,7 +40,7 @@ export default function LoginPage() {
       setError('Email atau password salah. Silakan coba lagi.');
       setIsSubmitting(false);
     } else {
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     }
   };
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
                 className="bg-white border-gray-300 focus-visible:ring-blue-600 h-11"
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base mt-4" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base mt-4 cursor-pointer" disabled={isSubmitting}>
               {isSubmitting ? 'Memproses...' : 'Login'}
             </Button>
           </form>

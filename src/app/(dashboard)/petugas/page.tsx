@@ -76,10 +76,10 @@ export default function PetugasPage() {
       header: "Aksi",
       cell: (item: PetugasDB) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" onClick={() => handleEditClick(item)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50 cursor-pointer" onClick={() => handleEditClick(item)}>
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50" onClick={() => setDeleteId(item.id)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:bg-red-50 cursor-pointer" onClick={() => setDeleteId(item.id)}>
             <UserX className="h-4 w-4" />
           </Button>
         </div>
@@ -216,7 +216,7 @@ export default function PetugasPage() {
         </Select>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger render={<Button className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 shrink-0" />}>
+          <DialogTrigger render={<Button className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 shrink-0 cursor-pointer" />}>
             <Plus className="w-4 h-4 mr-2" /> Tambah Petugas
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
@@ -244,7 +244,7 @@ export default function PetugasPage() {
                 <Label htmlFor="pos">Pos / Lokasi Standby</Label>
                 <Input id="pos" value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Opsional" />
               </div>
-              <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+              <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Buat Akun Petugas"}
               </Button>
             </form>
@@ -284,10 +284,10 @@ export default function PetugasPage() {
             <div className="space-y-2">
               <Label htmlFor="edit-status">Status Operasional</Label>
               <Select value={editFormData.status_petugas} onValueChange={(val: any) => setEditFormData({ ...editFormData, status_petugas: val })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent alignItemWithTrigger={false}>
                   <SelectItem value="Tersedia">Tersedia</SelectItem>
                   <SelectItem value="Bertugas">Bertugas</SelectItem>
                 </SelectContent>
@@ -297,17 +297,17 @@ export default function PetugasPage() {
             <div className="space-y-2 pt-2 border-t mt-4">
               <Label htmlFor="edit-active">Akses Akun</Label>
               <Select value={editFormData.is_active ? "true" : "false"} onValueChange={(val: any) => setEditFormData({ ...editFormData, is_active: val === "true" })}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih Akses" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent alignItemWithTrigger={false}>
                   <SelectItem value="true">Aktif (Dapat Login)</SelectItem>
                   <SelectItem value="false">Dinonaktifkan</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+            <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 cursor-pointer">
               {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Simpan Perubahan"}
             </Button>
           </form>
@@ -328,11 +328,11 @@ export default function PetugasPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting} className='cursor-pointer'>Batal</AlertDialogCancel>
             <AlertDialogAction 
               onClick={(e) => { e.preventDefault(); handleDelete(); }} 
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 cursor-pointer"
             >
               {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Ya, Hapus Permanen"}
             </AlertDialogAction>
