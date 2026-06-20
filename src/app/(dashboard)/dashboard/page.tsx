@@ -143,7 +143,7 @@ export default function DashboardPage() {
               Laporan Terbaru (Live)
             </h3>
             <Link href="/laporan">
-              <Button variant="ghost" size="sm" className="text-black font-semibold hover:bg-gray-100 rounded-full">
+              <Button variant="ghost" size="sm" className="text-black font-semibold hover:bg-gray-100 rounded-full cursor-pointer">
                 Lihat Semua &rarr;
               </Button>
             </Link>

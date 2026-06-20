@@ -429,7 +429,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                           <Button
                             type="button"
                             variant="outline"
-                            className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10"
+                            className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10 cursor-pointer"
                             onClick={() => setUnits([...units, { armadaId: "", petugasId: "" }])}
                           >
                             + Tambah Unit Lain
@@ -441,7 +441,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                           <Textarea id="catatan" placeholder="Instruksi tambahan jika ada..." className="resize-none bg-white" rows={2} value={catatan} onChange={(e) => setCatatan(e.target.value)} />
                         </div>
 
-                        <Button disabled={isSubmitting} type="submit" className="w-full bg-yellow-600 hover:bg-yellow-700 text-white">
+                        <Button disabled={isSubmitting} type="submit" className="w-full bg-yellow-600 hover:bg-yellow-700 text-white cursor-pointer">
                           {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />} 
                           Terjunkan {units.length} Unit
                         </Button>

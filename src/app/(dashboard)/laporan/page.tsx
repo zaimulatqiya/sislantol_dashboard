@@ -66,7 +66,7 @@ export default function LaporanPage() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 cursor-pointer"
           onClick={() => setSelectedLaporanId(item.id)}
         >
           <Eye className="h-4 w-4" />
