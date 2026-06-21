@@ -31,13 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 1. Dapatkan session saat ini dari Supabase
+    let isMounted = true;
+
+    // 1. Dapatkan session saat ini dari Supabase secara asinkron (membaca LocalStorage)
     const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await fetchProfile(session.user);
-      } else {
-        setIsLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await fetchProfile(session.user);
+        } else {
+          if (isMounted) setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Gagal mendapatkan session:", error);
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -45,15 +52,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Dengarkan perubahan status otentikasi (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        await fetchProfile(session.user);
-      } else {
-        setUser(null);
-        setIsLoading(false);
+      // Abaikan INITIAL_SESSION karena sudah ditangani oleh getSession() di atas
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (session?.user) {
+          await fetchProfile(session.user);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        if (isMounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);

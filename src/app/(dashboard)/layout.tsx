@@ -4,6 +4,8 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -12,6 +14,7 @@ export default function DashboardLayout({
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { user, isLoading } = useAuth();
 
   // Baca status dari localStorage saat pertama kali dimuat
   useEffect(() => {
@@ -21,6 +24,21 @@ export default function DashboardLayout({
     }
     setMounted(true);
   }, []);
+
+  // Tampilkan layar loading penuh saat masih mengecek status login
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  // Jika belum login, jangan render layout dashboard sama sekali
+  // (AuthContext akan secara otomatis mengarahkan user ke halaman /login)
+  if (!user) {
+    return null;
+  }
 
   if (!mounted) {
     return null; // Mencegah flash (sidebar terbuka sesaat) sebelum localStorage terbaca

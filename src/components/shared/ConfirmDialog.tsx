@@ -48,10 +48,10 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel} className="cursor-pointer">{cancelText}</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm}
-            className={variant === 'destructive' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
+            className={variant === 'destructive' ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer' : 'cursor-pointer'}
           >
             {confirmText}
           </AlertDialogAction>

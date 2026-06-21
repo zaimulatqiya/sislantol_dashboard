@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { CheckCircle, MapPin, Phone, User, Clock, Image as ImageIcon, XCircle, HardHat, Truck, Zap, X, Loader2 } from "lucide-react";
+import { CheckCircle, MapPin, Phone, User, Clock, Image as ImageIcon, XCircle, HardHat, Truck, Zap, X, Loader2, AlertCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import toast from "react-hot-toast";
 import { getDisplayJenisKejadian, getDisplayDeskripsi } from "@/lib/utils";
@@ -38,9 +38,12 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
   const [armadaData, setArmadaData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAttemptedAssign, setIsAttemptedAssign] = useState(false);
 
   useEffect(() => {
     if (!laporanId || !open) return;
+    
+    setIsAttemptedAssign(false);
 
     const fetchData = async () => {
       setIsLoading(true);
@@ -134,13 +137,14 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsAttemptedAssign(true);
     if (!laporan) return;
 
-    const validUnits = units.filter((u) => u.armadaId && u.petugasId);
-    if (validUnits.length === 0) {
-      toast.error("Harap lengkapi pilihan Armada dan Petugas untuk penugasan.");
+    const isFormValid = units.every((u) => u.armadaId && u.petugasId);
+    if (!isFormValid) {
       return;
     }
+    const validUnits = units;
 
     setIsSubmitting(true);
 
@@ -304,7 +308,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                   <Card className="shadow-sm border-yellow-100 bg-yellow-50/30">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Penugasan Petugas</h3>
-                      <form onSubmit={handleAssign} className="space-y-4">
+                      <form onSubmit={handleAssign} className="space-y-4" noValidate>
                         <div className="space-y-4 p-5 bg-white/50 border border-gray-100 rounded-xl">
                           {units.map((unit, index) => {
                             const selectedArmadaData = armadaData.find((a) => a.id === unit.armadaId);
@@ -342,9 +346,10 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                         newUnits[index].armadaId = val ?? "";
                                         newUnits[index].petugasId = "";
                                         setUnits(newUnits);
+                                        setIsAttemptedAssign(false);
                                       }}
                                     >
-                                      <SelectTrigger className="bg-white border-gray-200 shadow-sm h-10 w-full">
+                                      <SelectTrigger className={`bg-white shadow-sm h-10 w-full ${isAttemptedAssign && !unit.armadaId ? "border-red-400 ring-1 ring-red-400 focus:ring-red-500" : "border-gray-200"}`}>
                                         {selectedArmadaData ? (
                                           <span className="truncate flex-1 text-left flex items-center gap-2">
                                             <span>{selectedArmadaData.nama_armada}</span>
@@ -376,6 +381,11 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                           ))}
                                       </SelectContent>
                                     </Select>
+                                    {isAttemptedAssign && !unit.armadaId && (
+                                      <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1 font-medium animate-in slide-in-from-top-1">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Wajib memilih armada
+                                      </p>
+                                    )}
                                   </div>
 
                                   <div className="space-y-2">
@@ -390,9 +400,10 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                         const newUnits = [...units];
                                         newUnits[index].petugasId = val ?? "";
                                         setUnits(newUnits);
+                                        setIsAttemptedAssign(false);
                                       }}
                                     >
-                                      <SelectTrigger className={`bg-white border-gray-200 shadow-sm h-10 w-full ${!unit.armadaId ? "opacity-50 bg-gray-50 cursor-not-allowed" : ""}`}>
+                                      <SelectTrigger className={`bg-white shadow-sm h-10 w-full ${!unit.armadaId ? "opacity-50 bg-gray-50 cursor-not-allowed border-gray-200" : ""} ${isAttemptedAssign && unit.armadaId && !unit.petugasId ? "border-red-400 ring-1 ring-red-400 focus:ring-red-500" : "border-gray-200"}`}>
                                         {unit.petugasId ? (
                                           <span className="truncate flex-1 text-left flex items-center gap-2">
                                             <span>{petugasData.find((p) => p.id === unit.petugasId)?.nama}</span>
@@ -420,6 +431,11 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                         )}
                                       </SelectContent>
                                     </Select>
+                                    {isAttemptedAssign && unit.armadaId && !unit.petugasId && (
+                                      <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1 font-medium animate-in slide-in-from-top-1">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Wajib memilih petugas
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -430,7 +446,10 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                             type="button"
                             variant="outline"
                             className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10 cursor-pointer"
-                            onClick={() => setUnits([...units, { armadaId: "", petugasId: "" }])}
+                            onClick={() => {
+                              setUnits([...units, { armadaId: "", petugasId: "" }]);
+                              setIsAttemptedAssign(false);
+                            }}
                           >
                             + Tambah Unit Lain
                           </Button>
