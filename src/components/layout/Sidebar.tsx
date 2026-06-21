@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { Button } from '../ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'motion/react';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 const MENU_ITEMS = [
   { name: 'Beranda', path: '/dashboard', icon: LayoutDashboard },
@@ -36,7 +37,21 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setIsLogoutDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
  
@@ -185,7 +200,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
          
          <div className="relative group">
            <button
-            onClick={logout}
+            onClick={() => setIsLogoutDialogOpen(true)}
             className={cn(
               "flex items-center w-full rounded-2xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 cursor-pointer",
               (isCollapsed && !isMobile) ? "justify-center py-2.5 px-0 h-12" : "px-3 py-2.5 gap-3"
@@ -250,6 +265,17 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       >
         <SidebarContent />
       </motion.div>
+
+      <ConfirmDialog
+        open={isLogoutDialogOpen}
+        onOpenChange={setIsLogoutDialogOpen}
+        title="Konfirmasi Keluar"
+        description="Apakah Anda yakin ingin keluar dari Dashboard Sislantol?"
+        onConfirm={handleLogout}
+        confirmText="Ya, Keluar"
+        variant="destructive"
+        isLoading={isLoggingOut}
+      />
     </>
   );
 }

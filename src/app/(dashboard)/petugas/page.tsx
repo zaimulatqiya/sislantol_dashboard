@@ -230,11 +230,11 @@ export default function PetugasPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                <Input id="email" type="email" autoComplete="off" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password Sementara</Label>
-                <Input id="password" type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                <Input id="password" type="password" autoComplete="new-password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="noHp">Nomor HP</Label>

@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import React from "react";
+import { Loader2 } from "lucide-react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
+  isLoading?: boolean;
   children?: React.ReactNode;
 }
 
@@ -33,6 +35,7 @@ export function ConfirmDialog({
   confirmText = "Lanjutkan",
   cancelText = "Batal",
   variant = 'default',
+  isLoading = false,
   children
 }: ConfirmDialogProps) {
   return (
@@ -48,12 +51,17 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel} className="cursor-pointer">{cancelText}</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading} onClick={onCancel} className="cursor-pointer">{cancelText}</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onConfirm}
+            disabled={isLoading}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLoading) onConfirm();
+            }}
             className={variant === 'destructive' ? 'bg-red-600 hover:bg-red-700 text-white cursor-pointer' : 'cursor-pointer'}
           >
-            {confirmText}
+            {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            {isLoading ? "Memproses..." : confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
