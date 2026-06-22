@@ -83,8 +83,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           (isCollapsed && !isMobile) ? "justify-center" : "justify-between"
         )}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 min-w-[40px] rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100 shrink-0">
-              <Truck className="w-5 h-5 text-black" />
+            <div className="flex items-center justify-center shrink-0">
+              <img src="/assets/logo 1.svg" alt="Sislantol Icon" className="h-6 w-auto object-contain" />
             </div>
             <AnimatePresence initial={false}>
               {(!isCollapsed || isMobile) && (
@@ -95,7 +95,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   transition={springTransition}
                   className="flex flex-col whitespace-nowrap overflow-hidden"
                 >
-                  <span className="text-[17px] font-bold tracking-tight text-black leading-tight min-w-max py-0.5">Jasa Marga Ops</span>
+                  <span className="text-[17px] font-bold tracking-tight text-black leading-tight min-w-max py-0.5">SISLANTOL OPS</span>
                 </motion.div>
               )}
             </AnimatePresence>

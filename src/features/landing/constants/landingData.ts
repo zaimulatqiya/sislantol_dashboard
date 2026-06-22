@@ -1,6 +1,6 @@
 export const landingData = {
   header: {
-    logoText: "Jasa Marga Ops",
+    logoText: "SISLANTOL OPS",
     loginButtonText: "Login Admin",
     loginLink: "/login",
   },
