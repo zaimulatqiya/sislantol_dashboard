@@ -31,6 +31,7 @@ export interface Petugas {
   status: StatusPetugas;
   password: string;
   pos: string;
+  armada_id?: number;
 }
 
 export interface Armada {

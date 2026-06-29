@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: Request) {
   try {
-    const { email, password, nama, noHp, pos } = await req.json();
+    const { email, password, nama, noHp, pos, armada_id } = await req.json();
 
     // 1. Buat User di sistem Auth Supabase
     // Trigger 'handle_new_user' akan otomatis memasukkan data ke tabel 'profiles'
@@ -32,7 +32,8 @@ export async function POST(req: Request) {
     if (data.user) {
       await supabaseAdmin.from('profiles').update({
         status_petugas: 'Tersedia',
-        is_active: true
+        is_active: true,
+        armada_id: armada_id || null
       }).eq('id', data.user.id);
     }
     

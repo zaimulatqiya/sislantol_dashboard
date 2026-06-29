@@ -30,7 +30,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
   const [isVerifying, setIsVerifying] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [units, setUnits] = useState([{ armadaId: "", petugasId: "" }]);
+  const [units, setUnits] = useState<{armadaId: string; petugasIds: string[]}[]>([{ armadaId: "", petugasIds: [] }]);
   const [catatan, setCatatan] = useState("");
   const [penugasanList, setPenugasanList] = useState<any[]>([]);
 
@@ -140,11 +140,17 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
     setIsAttemptedAssign(true);
     if (!laporan) return;
 
-    const isFormValid = units.every((u) => u.armadaId && u.petugasId);
+    const isFormValid = units.every((u) => u.armadaId && u.petugasIds.length > 0);
     if (!isFormValid) {
       return;
     }
-    const validUnits = units;
+    
+    const validUnits: { armadaId: string; petugasId: string }[] = [];
+    units.forEach((u) => {
+      u.petugasIds.forEach((pid) => {
+        validUnits.push({ armadaId: u.armadaId, petugasId: pid });
+      });
+    });
 
     setIsSubmitting(true);
 
@@ -312,7 +318,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                         <div className="space-y-4 p-5 bg-white/50 border border-gray-100 rounded-xl">
                           {units.map((unit, index) => {
                             const selectedArmadaData = armadaData.find((a) => a.id === unit.armadaId);
-                            const availablePetugas = selectedArmadaData ? petugasData.filter((p) => (p.status_petugas === "Tersedia" || p.status_petugas === "Bertugas") /* Note: pos filtering removed temporarily since profiles doesn't have pos in schema currently */) : [];
+                            const availablePetugas = selectedArmadaData ? petugasData.filter((p) => (p.status_petugas === "Tersedia" || p.status_petugas === "Bertugas") && p.armada_id === selectedArmadaData.id) : [];
 
                             return (
                               <div key={index} className="relative space-y-4 pb-5 mb-5 border-b border-gray-100 last:border-0 last:mb-0 last:pb-0">
@@ -344,7 +350,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                       onValueChange={(val) => {
                                         const newUnits = [...units];
                                         newUnits[index].armadaId = val ?? "";
-                                        newUnits[index].petugasId = "";
+                                        newUnits[index].petugasIds = [];
                                         setUnits(newUnits);
                                         setIsAttemptedAssign(false);
                                       }}
@@ -388,52 +394,58 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                                     )}
                                   </div>
 
-                                  <div className="space-y-2">
+                                  <div className="space-y-3">
                                     <Label className="text-gray-700">
-                                      Pilih Petugas {selectedArmadaData ? <span className="text-yellow-600 font-medium">(Bebas)</span> : ""}
+                                      Pilih Petugas {selectedArmadaData ? <span className="text-yellow-600 font-medium">(Maks. 3 orang)</span> : ""}
                                     </Label>
-                                    <Select
-                                      required
-                                      disabled={!unit.armadaId}
-                                      value={unit.petugasId}
-                                      onValueChange={(val) => {
-                                        const newUnits = [...units];
-                                        newUnits[index].petugasId = val ?? "";
-                                        setUnits(newUnits);
-                                        setIsAttemptedAssign(false);
-                                      }}
-                                    >
-                                      <SelectTrigger className={`bg-white shadow-sm h-10 w-full ${!unit.armadaId ? "opacity-50 bg-gray-50 cursor-not-allowed border-gray-200" : ""} ${isAttemptedAssign && unit.armadaId && !unit.petugasId ? "border-red-400 ring-1 ring-red-400 focus:ring-red-500" : "border-gray-200"}`}>
-                                        {unit.petugasId ? (
-                                          <span className="truncate flex-1 text-left flex items-center gap-2">
-                                            <span>{petugasData.find((p) => p.id === unit.petugasId)?.nama}</span>
-                                            {petugasData.find((p) => p.id === unit.petugasId)?.status_petugas === "Bertugas" && (
-                                              <span className="text-[10px] leading-none bg-yellow-100 text-yellow-700 px-1.5 py-1 rounded border border-yellow-200 font-medium">Bertugas</span>
-                                            )}
-                                          </span>
-                                        ) : (
-                                          <SelectValue placeholder={unit.armadaId ? "Pilih Petugas..." : "Pilih armada terlebih dahulu"} />
-                                        )}
-                                      </SelectTrigger>
-                                      <SelectContent alignItemWithTrigger={false} className="max-h-56 overflow-y-auto">
-                                        {availablePetugas.map((p) => (
-                                          <SelectItem key={p.id} value={p.id} className="cursor-pointer">
-                                            <div className="flex items-center gap-2">
-                                              <span>{p.nama}</span>
+                                    {!unit.armadaId ? (
+                                      <div className="p-3 text-sm text-gray-500 bg-gray-50 rounded-md border border-gray-200">
+                                        Pilih armada terlebih dahulu untuk melihat daftar petugas.
+                                      </div>
+                                    ) : availablePetugas.length === 0 ? (
+                                      <div className="p-3 text-sm text-gray-500 bg-gray-50 rounded-md border border-gray-200 italic">
+                                        Tidak ada petugas yang dikhususkan untuk {selectedArmadaData.nama_armada} yang sedang tersedia.
+                                      </div>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100 min-h-[60px]">
+                                        {availablePetugas.map((p) => {
+                                          const isSelected = unit.petugasIds.includes(p.id);
+                                          return (
+                                            <button
+                                              type="button"
+                                              key={p.id}
+                                              onClick={() => {
+                                                const newUnits = [...units];
+                                                if (isSelected) {
+                                                  newUnits[index].petugasIds = newUnits[index].petugasIds.filter(id => id !== p.id);
+                                                } else {
+                                                  if (newUnits[index].petugasIds.length < 3) {
+                                                    newUnits[index].petugasIds.push(p.id);
+                                                  } else {
+                                                    toast.error("Maksimal 3 petugas per armada");
+                                                  }
+                                                }
+                                                setUnits(newUnits);
+                                                setIsAttemptedAssign(false);
+                                              }}
+                                              className={`px-3 py-1.5 text-sm rounded-full border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                isSelected 
+                                                  ? "bg-yellow-100 border-yellow-400 text-yellow-800 shadow-sm font-medium" 
+                                                  : "bg-white border-gray-200 text-gray-700 hover:border-yellow-300 hover:bg-yellow-50"
+                                              }`}
+                                            >
+                                              {p.nama}
                                               {p.status_petugas === "Bertugas" && (
-                                                <span className="text-[10px] leading-none bg-yellow-100 text-yellow-700 px-1.5 py-1 rounded border border-yellow-200 font-medium">{p.status_petugas}</span>
+                                                <span className={`text-[10px] px-1 py-0.5 rounded leading-none ${isSelected ? 'bg-yellow-200 text-yellow-900' : 'bg-gray-100 text-gray-500'}`}>Bertugas</span>
                                               )}
-                                            </div>
-                                          </SelectItem>
-                                        ))}
-                                        {availablePetugas.length === 0 && unit.armadaId && (
-                                          <div className="p-3 text-sm text-gray-500 text-center italic">Tidak ada petugas tersedia</div>
-                                        )}
-                                      </SelectContent>
-                                    </Select>
-                                    {isAttemptedAssign && unit.armadaId && !unit.petugasId && (
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                    {isAttemptedAssign && unit.armadaId && unit.petugasIds.length === 0 && (
                                       <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1 font-medium animate-in slide-in-from-top-1">
-                                        <AlertCircle className="w-3.5 h-3.5" /> Wajib memilih petugas
+                                        <AlertCircle className="w-3.5 h-3.5" /> Wajib memilih minimal 1 petugas
                                       </p>
                                     )}
                                   </div>
@@ -447,7 +459,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                             variant="outline"
                             className="w-full border-dashed border-2 border-yellow-300 text-yellow-700 hover:bg-yellow-50/50 mt-2 h-10 cursor-pointer"
                             onClick={() => {
-                              setUnits([...units, { armadaId: "", petugasId: "" }]);
+                              setUnits([...units, { armadaId: "", petugasIds: [] }]);
                               setIsAttemptedAssign(false);
                             }}
                           >

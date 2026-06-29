@@ -12,6 +12,7 @@ export interface PetugasDB {
   status_petugas: 'Tersedia' | 'Bertugas' | 'Tidak Aktif';
   is_active: boolean;
   created_at: string;
+  armada_id?: number;
 }
 
 export function useRealtimePetugas() {

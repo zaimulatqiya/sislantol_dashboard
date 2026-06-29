@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Plus, UserX, Search, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { useRealtimePetugas, PetugasDB } from "@/hooks/useRealtimePetugas";
+import { useRealtimeArmada } from "@/hooks/useRealtimeArmada";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import {
@@ -40,6 +41,7 @@ export default function PetugasPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { petugasList, loading, refetch } = useRealtimePetugas();
+  const { armadaList } = useRealtimeArmada();
 
   const [formData, setFormData] = useState({
     nama: "",
@@ -47,6 +49,7 @@ export default function PetugasPage() {
     password: "",
     noHp: "",
     pos: "",
+    armada_id: "",
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -54,11 +57,24 @@ export default function PetugasPage() {
     noHp: "",
     status_petugas: "Tersedia" as any,
     is_active: true,
+    armada_id: "",
   });
 
   const columns = [
     { header: "Nama Lengkap", accessorKey: "nama" as any },
     { header: "No HP", accessorKey: "no_hp" as any },
+    {
+      header: "Armada Khusus",
+      cell: (item: PetugasDB) => {
+        if (!item.armada_id) return <span className="text-gray-400 text-sm">-</span>;
+        const armada = armadaList.find(a => a.id === item.armada_id);
+        return armada ? (
+          <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 truncate max-w-[150px]">
+            {armada.nama_armada}
+          </Badge>
+        ) : <span className="text-gray-400 text-sm">Armada #{item.armada_id}</span>;
+      },
+    },
     {
       header: "Status",
       cell: (item: PetugasDB) => {
@@ -94,6 +110,7 @@ export default function PetugasPage() {
       noHp: petugas.no_hp || "",
       status_petugas: petugas.status_petugas,
       is_active: petugas.is_active,
+      armada_id: petugas.armada_id ? petugas.armada_id.toString() : "",
     });
     setIsEditOpen(true);
   };
@@ -109,6 +126,7 @@ export default function PetugasPage() {
         no_hp: editFormData.noHp,
         status_petugas: editFormData.status_petugas,
         is_active: editFormData.is_active,
+        armada_id: editFormData.armada_id ? parseInt(editFormData.armada_id) : null,
       }).eq("id", editId);
       
       toast.success("Profil petugas berhasil diperbarui");
@@ -149,7 +167,10 @@ export default function PetugasPage() {
       const res = await fetch('/api/admin/petugas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          armada_id: formData.armada_id ? parseInt(formData.armada_id) : null
+        })
       });
       const data = await res.json();
       
@@ -159,7 +180,7 @@ export default function PetugasPage() {
 
       toast.success("Petugas berhasil didaftarkan!");
       setIsAddOpen(false);
-      setFormData({ nama: "", email: "", password: "", noHp: "", pos: "" });
+      setFormData({ nama: "", email: "", password: "", noHp: "", pos: "", armada_id: "" });
       refetch();
     } catch (error: any) {
       toast.error("Gagal mendaftarkan petugas: " + error.message);
@@ -244,6 +265,19 @@ export default function PetugasPage() {
                 <Label htmlFor="pos">Pos / Lokasi Standby</Label>
                 <Input id="pos" value={formData.pos} onChange={(e) => setFormData({ ...formData, pos: e.target.value })} placeholder="Opsional" />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="armada_id">Armada Khusus</Label>
+                <Select value={formData.armada_id} onValueChange={(val: any) => setFormData({ ...formData, armada_id: val })}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pilih Armada" />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false} className="max-h-56 overflow-y-auto">
+                    {armadaList.map(a => (
+                      <SelectItem key={a.id} value={a.id.toString()}>{a.nama_armada}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button disabled={isSubmitting} type="submit" className="w-full mt-4 bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Buat Akun Petugas"}
               </Button>
@@ -279,6 +313,19 @@ export default function PetugasPage() {
             <div className="space-y-2">
               <Label htmlFor="edit-noHp">Nomor HP</Label>
               <Input id="edit-noHp" required value={editFormData.noHp} onChange={(e) => setEditFormData({ ...editFormData, noHp: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_armada_id">Armada Khusus</Label>
+              <Select value={editFormData.armada_id} onValueChange={(val: any) => setEditFormData({ ...editFormData, armada_id: val })}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih Armada" />
+                </SelectTrigger>
+                <SelectContent alignItemWithTrigger={false} className="max-h-56 overflow-y-auto">
+                  {armadaList.map(a => (
+                    <SelectItem key={a.id} value={a.id.toString()}>{a.nama_armada}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
