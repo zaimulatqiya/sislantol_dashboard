@@ -32,7 +32,7 @@ export function useRealtimePetugas() {
         console.error("Supabase Error (petugas):", error);
         return;
       }
-      
+
       if (data) {
         setPetugasList(data);
       }
@@ -54,7 +54,7 @@ export function useRealtimePetugas() {
         { event: '*', schema: 'public', table: 'profiles' },
         (payload) => {
           const { eventType, new: newRecord, old: oldRecord } = payload;
-          
+
           if (eventType === 'INSERT' && newRecord.role === 'petugas') {
             setPetugasList((prev) => [newRecord as PetugasDB, ...prev]);
           } else if (eventType === 'UPDATE') {

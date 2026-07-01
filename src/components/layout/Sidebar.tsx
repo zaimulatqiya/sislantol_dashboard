@@ -103,7 +103,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-2">
         <nav className="space-y-1.5 px-3">
           <AnimatePresence initial={false}>
             {(!isCollapsed || isMobile) && (
@@ -126,6 +126,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 <Link
                   href={item.path}
                   onClick={() => setIsMobileOpen(false)}
+                  title={collapsed ? item.name : undefined}
                   className={cn(
                     "flex items-center rounded-[18px] text-[15px] font-semibold transition-colors duration-200",
                     isActive 
@@ -151,14 +152,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   </AnimatePresence>
                 </Link>
 
-                {/* Tooltip */}
-                {collapsed && (
-                  <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 rounded-md bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 whitespace-nowrap shadow-md">
-                    {item.name}
-                    {/* Tooltip Arrow */}
-                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-[5px] border-transparent border-r-gray-900"></div>
-                  </div>
-                )}
               </div>
             );
           })}
@@ -201,6 +194,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
          <div className="relative group">
            <button
             onClick={() => setIsLogoutDialogOpen(true)}
+            title={(isCollapsed && !isMobile) ? "Log out" : undefined}
             className={cn(
               "flex items-center w-full rounded-2xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors duration-200 cursor-pointer",
               (isCollapsed && !isMobile) ? "justify-center py-2.5 px-0 h-12" : "px-3 py-2.5 gap-3"
@@ -222,13 +216,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
              </AnimatePresence>
            </button>
 
-           {/* Tooltip for Logout */}
-           {(isCollapsed && !isMobile) && (
-             <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 rounded-md bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 whitespace-nowrap shadow-md">
-               Log out
-               <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-[5px] border-transparent border-r-red-600"></div>
-             </div>
-           )}
          </div>
       </div>
     </div>

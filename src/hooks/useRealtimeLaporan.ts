@@ -41,7 +41,7 @@ export function useRealtimeLaporan() {
         console.error("Supabase Error (laporan):", error);
         return;
       }
-      
+
       if (data) {
         setLaporanList(data);
       }

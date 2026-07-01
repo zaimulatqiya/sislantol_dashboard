@@ -14,8 +14,8 @@ const CAROUSEL_IMAGES = [
 ];
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@sislantol.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
@@ -50,9 +50,7 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="max-w-md w-full space-y-8">
           <div className="flex flex-col items-start justify-center mb-10">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 mb-6">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
+            <img src="/assets/logo 1.svg" alt="Sislantol Logo" className="h-12 w-auto object-contain mb-6" />
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Selamat Datang di Sislantol</h2>
             <p className="text-base text-gray-500">Masuk untuk memantau lalu lintas dan mengelola layanan patroli tol.</p>
           </div>
@@ -65,11 +63,11 @@ export default function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 font-medium">Alamat Email</Label>
+              <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@sislantol.com"
+                placeholder="Masukkan alamat email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -84,6 +82,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
+                placeholder="Masukkan Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
