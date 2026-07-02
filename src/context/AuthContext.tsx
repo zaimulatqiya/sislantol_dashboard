@@ -33,29 +33,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Dapatkan session saat ini dari Supabase secara asinkron (membaca LocalStorage)
-    const initAuth = async () => {
+    const fetchProfile = async (authUser: any) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          await fetchProfile(session.user);
+        const queryPromise = supabase
+          .from('profiles')
+          .select('nama, role, no_hp, profile_image')
+          .eq('id', authUser.id)
+          .single();
+
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Fetch profile timeout")), 10000)
+        );
+
+        const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
+        if (error) throw error;
+
+        if (data.role !== 'admin') {
+          await supabase.auth.signOut();
+          if (isMounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
+          alert("Akses Ditolak: Akun Anda bukan Admin.");
         } else {
-          if (isMounted) setIsLoading(false);
+          if (isMounted) {
+            setUser({
+              id: authUser.id,
+              email: authUser.email,
+              nama: data.nama,
+              role: data.role,
+              noHp: data.no_hp || '',
+              profileImage: data.profile_image || undefined,
+            });
+          }
         }
       } catch (error) {
-        console.error("Gagal mendapatkan session:", error);
+        console.error("Gagal mengambil profil (kemungkinan timeout jaringan):", error);
+        if (isMounted) {
+          // Hanya null-kan user jika sebelumnya memang belum ada data (initial load).
+          // Jika sebelumnya sudah login, biarkan saja (jangan paksa logout akibat jaringan ngadat).
+          setUser((prevUser) => prevUser ? prevUser : null);
+        }
+      } finally {
         if (isMounted) setIsLoading(false);
       }
     };
 
-    initAuth();
-
-    // 2. Dengarkan perubahan status otentikasi (login/logout)
+    // Gunakan HANYA onAuthStateChange termasuk INITIAL_SESSION
+    // untuk menghindari race condition double-fetchProfile dari getSession()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Abaikan INITIAL_SESSION karena sudah ditangani oleh getSession() di atas
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         if (session?.user) {
           await fetchProfile(session.user);
+        } else {
+          if (isMounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         if (isMounted) {
@@ -71,40 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const fetchProfile = async (authUser: any) => {
-    try {
-      // Ambil data tambahan (nama, role) dari tabel profiles
-      // Juga coba ambil no_hp dan profile_image jika ada
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('nama, role, no_hp, profile_image')
-        .eq('id', authUser.id)
-        .single();
-
-      if (error) throw error;
-
-      // Pastikan hanya admin yang bisa mengakses dashboard
-      if (data.role !== 'admin') {
-        await supabase.auth.signOut();
-        setUser(null);
-        alert("Akses Ditolak: Akun Anda bukan Admin.");
-      } else {
-        setUser({
-          id: authUser.id,
-          email: authUser.email,
-          nama: data.nama,
-          role: data.role,
-          noHp: data.no_hp || '',
-          profileImage: data.profile_image || undefined,
-        });
-      }
-    } catch (error) {
-      console.error("Gagal mengambil profil:", error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (!isLoading) {
@@ -121,10 +122,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, pass: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const loginPromise = supabase.auth.signInWithPassword({
         email,
         password: pass,
       });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Login timeout")), 10000)
+      );
+
+      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
 
       if (error || !data.user) {
         return false;
@@ -136,9 +143,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    router.push('/login');
+    try {
+      // Timeout 3 detik untuk mencegah stuck jika jaringan ngadat
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Logout timeout")), 3000)
+      );
+      await Promise.race([supabase.auth.signOut(), timeoutPromise]);
+    } catch (error) {
+      console.warn("Jaringan bermasalah saat logout, memaksa logout lokal:", error);
+    } finally {
+      setUser(null);
+      router.push('/login');
+    }
   };
 
   const updateUser = async (updates: Partial<AdminUser>) => {
@@ -147,9 +163,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Update data di Supabase (tabel profiles)
       const dbUpdates: any = {};
-      if (updates.nama !== undefined) dbUpdates.nama = updates.nama;
-      if (updates.noHp !== undefined) dbUpdates.no_hp = updates.noHp;
-      if (updates.profileImage !== undefined) dbUpdates.profile_image = updates.profileImage;
+      if ('nama' in updates) dbUpdates.nama = updates.nama;
+      if ('noHp' in updates) dbUpdates.no_hp = updates.noHp === undefined ? null : updates.noHp;
+      if ('profileImage' in updates) dbUpdates.profile_image = updates.profileImage === undefined ? null : updates.profileImage;
 
       if (Object.keys(dbUpdates).length > 0) {
         const { error } = await supabase

@@ -42,8 +42,6 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
 
   useEffect(() => {
     if (!laporanId || !open) return;
-    
-    setIsAttemptedAssign(false);
 
     const fetchData = async () => {
       setIsLoading(true);
@@ -317,7 +315,7 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                       <form onSubmit={handleAssign} className="space-y-4" noValidate>
                         <div className="space-y-4 p-5 bg-white/50 border border-gray-100 rounded-xl">
                           {units.map((unit, index) => {
-                            const selectedArmadaData = armadaData.find((a) => a.id === unit.armadaId);
+                            const selectedArmadaData = armadaData.find((a) => String(a.id) === String(unit.armadaId));
                             const availablePetugas = selectedArmadaData ? petugasData.filter((p) => (p.status_petugas === "Tersedia" || p.status_petugas === "Bertugas") && p.armada_id === selectedArmadaData.id) : [];
 
                             return (

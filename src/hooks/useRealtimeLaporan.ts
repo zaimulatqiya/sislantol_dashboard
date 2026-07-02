@@ -25,8 +25,8 @@ export function useRealtimeLaporan() {
 
   const fetchInitial = async () => {
     try {
-      setLoading(true);
-      const { data, error } = await supabase
+      // Hapus setLoading(true) di sini agar tidak flash jadi skeleton setiap ada update
+      const queryPromise = supabase
         .from('laporan')
         .select(`
           *,
@@ -36,6 +36,13 @@ export function useRealtimeLaporan() {
           )
         `)
         .order('created_at', { ascending: false });
+
+      // Anti-stuck: paksa throw error jika request menggantung lebih dari 12 detik
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Supabase fetch timeout")), 12000)
+      );
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("Supabase Error (laporan):", error);
@@ -55,6 +62,14 @@ export function useRealtimeLaporan() {
   useEffect(() => {
     fetchInitial();
 
+    // Re-fetch saat tab kembali aktif dari minimize/background
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchInitial();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // 2. Subscribe realtime untuk perubahan
     const channelId = `laporan-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
@@ -67,31 +82,24 @@ export function useRealtimeLaporan() {
           table: 'laporan',
         },
         (payload) => {
-          const { eventType, new: newRecord, old: oldRecord } = payload;
+          const { eventType, old: oldRecord } = payload;
 
-          setLaporanList((prev) => {
-            if (eventType === 'INSERT') {
-              fetchInitial(); // re-fetch to get relations
-              return prev;
-            }
-            if (eventType === 'UPDATE') {
-              fetchInitial(); // re-fetch to get relations
-              return prev;
-            }
-            if (eventType === 'DELETE') {
-              // Hapus laporsupan
-              return prev.filter(
-                (item) => item.id !== (oldRecord as Laporan).id
-              );
-            }
-            return prev;
-          });
+          if (eventType === 'INSERT' || eventType === 'UPDATE') {
+            // Re-fetch agar relasi (penugasan, petugas) ikut ter-update
+            fetchInitial();
+          } else if (eventType === 'DELETE') {
+            // Untuk DELETE, kita bisa update optimistis tanpa re-fetch
+            setLaporanList((prev) =>
+              prev.filter((item) => item.id !== (oldRecord as Laporan).id)
+            );
+          }
         }
       )
       .subscribe();
 
     // 3. Cleanup saat component unmount
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
   }, []);

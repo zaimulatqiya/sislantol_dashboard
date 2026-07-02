@@ -21,12 +21,17 @@ export function useRealtimePetugas() {
 
   const fetchInitial = async () => {
     try {
-      setLoading(true);
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from('profiles')
         .select('*')
         .eq('role', 'petugas')
         .order('nama', { ascending: true });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Supabase fetch timeout")), 12000)
+      );
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("Supabase Error (petugas):", error);
@@ -46,6 +51,13 @@ export function useRealtimePetugas() {
   useEffect(() => {
     fetchInitial();
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchInitial();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const channelId = `petugas-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
       .channel(channelId)
@@ -58,7 +70,13 @@ export function useRealtimePetugas() {
           if (eventType === 'INSERT' && newRecord.role === 'petugas') {
             setPetugasList((prev) => [newRecord as PetugasDB, ...prev]);
           } else if (eventType === 'UPDATE') {
-            setPetugasList((prev) => prev.map((i) => i.id === newRecord.id ? newRecord as PetugasDB : i));
+            if (newRecord.role === 'petugas') {
+              // Update data petugas yang masih aktif
+              setPetugasList((prev) => prev.map((i) => i.id === newRecord.id ? newRecord as PetugasDB : i));
+            } else {
+              // Role berubah (misal: downgrade ke pengguna) → hapus dari list
+              setPetugasList((prev) => prev.filter((i) => i.id !== newRecord.id));
+            }
           } else if (eventType === 'DELETE') {
             setPetugasList((prev) => prev.filter((i) => i.id !== oldRecord.id));
           }
@@ -67,6 +85,7 @@ export function useRealtimePetugas() {
       .subscribe();
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
   }, []);

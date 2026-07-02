@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Pencil, Plus, Trash2, Search, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
+import { Pencil, Plus, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { useRealtimeArmada, ArmadaDB } from "@/hooks/useRealtimeArmada";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
@@ -218,7 +218,7 @@ export default function ArmadaPage() {
 
       <TableToolbar
         searchQuery={search}
-        onSearchChange={setSearch}
+        onSearchChange={(val) => { setSearch(val); setPage(1); }}
         onRefresh={refetch}
         searchPlaceholder="Cari plat nomor atau driver..."
       >

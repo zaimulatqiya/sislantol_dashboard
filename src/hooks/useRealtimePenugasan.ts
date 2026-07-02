@@ -21,8 +21,7 @@ export function useRealtimePenugasan() {
 
   const fetchInitial = async () => {
     try {
-      setLoading(true);
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from('penugasan')
         .select(`
           *,
@@ -31,6 +30,12 @@ export function useRealtimePenugasan() {
           armada (*)
         `)
         .order('created_at', { ascending: false });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Supabase fetch timeout")), 12000)
+      );
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("Supabase Error (penugasan):", error);
@@ -49,6 +54,13 @@ export function useRealtimePenugasan() {
   useEffect(() => {
     fetchInitial();
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchInitial();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // 2. Subscribe realtime
     const channelId = `penugasan-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
@@ -63,6 +75,7 @@ export function useRealtimePenugasan() {
       .subscribe();
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
   }, []);

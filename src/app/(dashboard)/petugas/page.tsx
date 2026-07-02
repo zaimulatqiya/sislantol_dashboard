@@ -220,7 +220,7 @@ export default function PetugasPage() {
 
       <TableToolbar
         searchQuery={search}
-        onSearchChange={setSearch}
+        onSearchChange={(val) => { setSearch(val); setPage(1); }}
         onRefresh={refetch}
         searchPlaceholder="Cari nama atau telepon..."
       >

@@ -47,7 +47,7 @@ export async function assignPenugasanAction(
         .update({ status: "Digunakan" })
         .eq("id", u.armadaId);
       
-      if (errArmada) console.error("Gagal update armada:", errArmada);
+      if (errArmada) throw new Error("Gagal update armada: " + errArmada.message);
     }
 
     // 4. Update Petugas (menjadi Bertugas)
@@ -57,7 +57,7 @@ export async function assignPenugasanAction(
         .update({ status_petugas: "Bertugas" })
         .eq("id", u.petugasId);
 
-      if (errPetugas) console.error("Gagal update petugas:", errPetugas);
+      if (errPetugas) throw new Error("Gagal update petugas: " + errPetugas.message);
     }
 
     return { success: true };

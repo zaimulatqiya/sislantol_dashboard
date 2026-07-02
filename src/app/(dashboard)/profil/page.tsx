@@ -117,9 +117,13 @@ export default function ProfilPage() {
     fileInputRef.current?.click();
   };
 
-  const handleRemoveImage = (e: React.MouseEvent) => {
+  const handleRemoveImage = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    updateUser({ profileImage: undefined });
+    const success = await updateUser({ profileImage: undefined });
+    if (!success) {
+      toast.error('Gagal menghapus foto profil.');
+      return;
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

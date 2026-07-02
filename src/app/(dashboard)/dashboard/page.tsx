@@ -2,15 +2,12 @@
 
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
-import { FileText, Clock, Loader, CheckCircle, ArrowRight, TrendingUp, RefreshCw } from "lucide-react";
-import { mockPetugas } from "@/data/mockData";
+import { FileText, ArrowRight } from "lucide-react";
 import { DataTable } from "@/components/shared/DataTable";
 import { BadgeStatus } from "@/components/shared/BadgeStatus";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Petugas } from "@/types";
+import { useState } from "react";
 import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { useRealtimePetugas } from "@/hooks/useRealtimePetugas";
 import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";

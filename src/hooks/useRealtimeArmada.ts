@@ -19,11 +19,16 @@ export function useRealtimeArmada() {
 
   const fetchInitial = async () => {
     try {
-      setLoading(true);
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from('armada')
         .select('*')
         .order('nama_armada', { ascending: true });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Supabase fetch timeout")), 12000)
+      );
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("Supabase Error (armada):", error);
@@ -41,6 +46,13 @@ export function useRealtimeArmada() {
 
   useEffect(() => {
     fetchInitial();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchInitial();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const channelId = `armada-realtime-${Math.random().toString(36).substring(7)}`;
     const channel = supabase
@@ -61,6 +73,7 @@ export function useRealtimeArmada() {
       .subscribe();
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       supabase.removeChannel(channel);
     };
   }, []);
