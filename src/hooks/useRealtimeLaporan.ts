@@ -95,6 +95,19 @@ export function useRealtimeLaporan() {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'penugasan',
+        },
+        (payload) => {
+          // Jika ada perubahan di penugasan (misal status diupdate dari mobile)
+          // Refetch laporan agar relasi penugasan terupdate di UI
+          fetchInitial();
+        }
+      )
       .subscribe();
 
     // 3. Cleanup saat component unmount

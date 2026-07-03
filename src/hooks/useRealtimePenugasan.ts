@@ -72,6 +72,14 @@ export function useRealtimePenugasan() {
           fetchInitial();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'laporan' },
+        async (payload) => {
+          // Refetch jika ada update laporan agar relasi (deskripsi, foto) ikut terupdate
+          fetchInitial();
+        }
+      )
       .subscribe();
 
     return () => {

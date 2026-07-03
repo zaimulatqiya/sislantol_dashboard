@@ -269,7 +269,9 @@ export default function PetugasPage() {
                 <Label htmlFor="armada_id">Armada Khusus</Label>
                 <Select value={formData.armada_id} onValueChange={(val: any) => setFormData({ ...formData, armada_id: val })}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih Armada" />
+                    <SelectValue placeholder="Pilih Armada">
+                      {formData.armada_id ? armadaList.find(a => a.id.toString() === formData.armada_id)?.nama_armada : "Pilih Armada"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false} className="max-h-56 overflow-y-auto">
                     {armadaList.map(a => (
@@ -318,7 +320,9 @@ export default function PetugasPage() {
               <Label htmlFor="edit_armada_id">Armada Khusus</Label>
               <Select value={editFormData.armada_id} onValueChange={(val: any) => setEditFormData({ ...editFormData, armada_id: val })}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Armada" />
+                  <SelectValue placeholder="Pilih Armada">
+                    {editFormData.armada_id ? armadaList.find(a => a.id.toString() === editFormData.armada_id)?.nama_armada : "Pilih Armada"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent alignItemWithTrigger={false} className="max-h-56 overflow-y-auto">
                   {armadaList.map(a => (
