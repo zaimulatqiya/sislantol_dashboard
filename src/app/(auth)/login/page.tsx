@@ -40,7 +40,7 @@ export default function LoginPage() {
       setError('Email atau password salah. Silakan coba lagi.');
       setIsSubmitting(false);
     } else {
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     }
   };
 

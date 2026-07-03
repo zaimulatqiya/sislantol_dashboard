@@ -115,12 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!user && !publicPaths.includes(pathname)) {
         router.push('/login');
       } else if (user && pathname === '/login') {
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }
     }
   }, [user, isLoading, pathname, router]);
 
   const login = async (email: string, pass: string) => {
+    setIsLoading(true);
     try {
       const loginPromise = supabase.auth.signInWithPassword({
         email,
@@ -134,10 +135,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
 
       if (error || !data.user) {
+        setIsLoading(false);
         return false;
       }
-      return true; // onAuthStateChange akan menangani fetchProfile
+      return true; // onAuthStateChange akan menangani fetchProfile dan mengembalikan isLoading ke false
     } catch (e) {
+      console.error("Login exception:", e);
+      setIsLoading(false);
       return false;
     }
   };
