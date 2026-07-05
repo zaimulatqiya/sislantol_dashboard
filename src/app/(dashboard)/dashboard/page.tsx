@@ -89,7 +89,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <h2 className="text-xl font-bold tracking-tight text-gray-900">Overview performance</h2>
             <div className="flex bg-gray-50/80 p-1 rounded-full border border-gray-100/50 w-full sm:w-auto overflow-x-auto">
-              {["Today", "7 Days", "30 Days", "This Year", "All Time"].map((range) => (
+              {["Hari Ini", "7 Hari", "30 Hari", "Tahun Ini", "Semua"].map((range) => (
                 <button key={range} onClick={() => setTimeRange(range)} className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${timeRange === range ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-black"}`}>
                   {range}
                 </button>
