@@ -542,27 +542,53 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                               <Label className="text-gray-500 flex items-center gap-1.5 mb-2">
                                 <ImageIcon className="w-4 h-4" /> Foto Bukti Selesai
                               </Label>
-                              {penugasan.foto_bukti_url ? (
-                                <Dialog>
-                                  <DialogTrigger className="w-full sm:w-64 h-40 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all p-0 bg-gray-100 focus:outline-none flex items-center justify-center">
-                                    <img src={penugasan.foto_bukti_url} alt="Foto Bukti Selesai" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                                  </DialogTrigger>
-                                  <DialogContent className="sm:max-w-5xl w-[95vw] bg-transparent border-none shadow-none ring-0 p-0" showCloseButton={false}>
-                                    <DialogTitle className="sr-only">Preview Foto Bukti</DialogTitle>
-                                    <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group cursor-pointer">
-                                      <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                      <span className="text-sm font-semibold tracking-wide pr-1">Tutup Preview</span>
-                                    </DialogClose>
-                                    <div className="relative w-full h-[90vh] flex items-center justify-center">
-                                      <img src={penugasan.foto_bukti_url} alt="Preview Foto Bukti" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl ring-1 ring-white/20" />
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              ) : (
-                                <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-                                  <span className="text-sm text-gray-400">Belum ada foto yang diunggah.</span>
-                                </div>
-                              )}
+                              {(() => {
+                                let fotoBuktiUrls: string[] = [];
+                                if (penugasan.foto_bukti_urls && Array.isArray(penugasan.foto_bukti_urls)) {
+                                  fotoBuktiUrls = penugasan.foto_bukti_urls;
+                                } else if (penugasan.foto_bukti_url) {
+                                  try {
+                                    const parsed = JSON.parse(penugasan.foto_bukti_url);
+                                    if (Array.isArray(parsed)) {
+                                      fotoBuktiUrls = parsed;
+                                    } else {
+                                      fotoBuktiUrls = [penugasan.foto_bukti_url];
+                                    }
+                                  } catch (e) {
+                                    if (typeof penugasan.foto_bukti_url === 'string' && penugasan.foto_bukti_url.includes(',')) {
+                                      fotoBuktiUrls = penugasan.foto_bukti_url.split(',').map((s: string) => s.trim());
+                                    } else {
+                                      fotoBuktiUrls = [penugasan.foto_bukti_url];
+                                    }
+                                  }
+                                }
+
+                                return fotoBuktiUrls.length > 0 ? (
+                                  <div className="flex flex-wrap gap-3">
+                                    {fotoBuktiUrls.map((url, urlIdx) => (
+                                      <Dialog key={urlIdx}>
+                                        <DialogTrigger className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all p-0 bg-gray-100 focus:outline-none flex items-center justify-center shrink-0">
+                                          <img src={url} alt={`Foto Bukti Selesai ${urlIdx + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-5xl w-[95vw] bg-transparent border-none shadow-none ring-0 p-0" showCloseButton={false}>
+                                          <DialogTitle className="sr-only">Preview Foto Bukti {urlIdx + 1}</DialogTitle>
+                                          <DialogClose className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] flex items-center gap-2 px-5 py-2.5 bg-gray-900/90 hover:bg-gray-950 text-white backdrop-blur-md rounded-full border border-gray-700 transition-all shadow-2xl focus:outline-none group cursor-pointer">
+                                            <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                            <span className="text-sm font-semibold tracking-wide pr-1">Tutup Preview</span>
+                                          </DialogClose>
+                                          <div className="relative w-full h-[90vh] flex items-center justify-center">
+                                            <img src={url} alt={`Preview Foto Bukti ${urlIdx + 1}`} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl ring-1 ring-white/20" />
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                                    <span className="text-sm text-gray-400">Belum ada foto yang diunggah.</span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         ))}
