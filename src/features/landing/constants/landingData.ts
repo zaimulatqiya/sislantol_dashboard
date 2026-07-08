@@ -11,7 +11,7 @@ export const landingData = {
     primaryButtonText: "Pantau Operasional",
     primaryButtonLink: "/dashboard",
 
-    previewImage: "/assets/dashboard-preview.png",
+    previewImage: "/assets/dashboard-preview.webp",
     previewImageAlt: "Dashboard Preview",
   },
   footer: {

@@ -9,7 +9,7 @@ import { Zap, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const CAROUSEL_IMAGES = [
-  '/assets/dashboard-preview.png',
+  '/assets/dashboard-preview.webp',
   '/assets/preview-2.png'
 ];
 
