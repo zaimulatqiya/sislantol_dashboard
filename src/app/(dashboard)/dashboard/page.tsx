@@ -12,7 +12,7 @@ import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { useRealtimePetugas } from "@/hooks/useRealtimePetugas";
 import { DashboardSkeleton } from "@/components/shared/SkeletonLoaders";
 export default function DashboardPage() {
-  const [timeRange, setTimeRange] = useState("7 Days");
+  const [timeRange, setTimeRange] = useState("7 Hari");
   
   // Menggunakan hook realtime yang ditarik dari Supabase
   const { laporanList, loading: loadingLaporan } = useRealtimeLaporan();
@@ -26,18 +26,18 @@ export default function DashboardPage() {
   const now = new Date();
   const filteredLaporan = laporanList.filter((l) => {
     const reportDate = new Date(l.created_at);
-    if (timeRange === "Today") {
+    if (timeRange === "Hari Ini") {
       return reportDate.toDateString() === now.toDateString();
-    } else if (timeRange === "7 Days") {
+    } else if (timeRange === "7 Hari") {
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       return reportDate >= oneWeekAgo;
-    } else if (timeRange === "30 Days") {
+    } else if (timeRange === "30 Hari") {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       return reportDate >= thirtyDaysAgo;
-    } else if (timeRange === "This Year") {
+    } else if (timeRange === "Tahun Ini") {
       return reportDate.getFullYear() === now.getFullYear();
     }
-    // "All Time" akan lolos filter (mereturn true)
+    // "Semua" akan lolos filter (mereturn true)
     return true;
   });
 

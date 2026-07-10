@@ -5,12 +5,33 @@ import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Zap, AlertCircle } from 'lucide-react';
+import { Zap, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const CAROUSEL_IMAGES = [
   '/assets/dashboard-preview.webp',
-  '/assets/preview-2.png'
+  '/assets/1.webp',
+  '/assets/2.webp',
+  '/assets/3.webp'
+];
+
+const CAROUSEL_QUOTES = [
+  {
+    text: 'Dashboard real-time Sislantol membantu saya memantau seluruh laporan dan kesiapan petugas hanya dalam satu layar.',
+    author: 'Ahmad Fauzi, Manajer Operasional Tol'
+  },
+  {
+    text: 'Dengan Sislantol, semua data lapangan langsung tersinkron ke pusat kontrol. Operasi cerdas, jalan lebih aman!',
+    author: 'Budi Santoso, Kepala Shift Operasional'
+  },
+  {
+    text: 'Sislantol mengintegrasikan pemantauan, respons cepat, dan teknologi dalam satu platform yang mudah digunakan.',
+    author: 'Rina Kusuma, Supervisor Lapangan'
+  },
+  {
+    text: 'Armada patroli kami kini beroperasi 24/7 dengan koordinasi yang jauh lebih efektif berkat sistem Sislantol.',
+    author: 'Deni Prasetyo, Koordinator Armada Patroli'
+  }
 ];
 
 export default function LoginPage() {
@@ -18,6 +39,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
 
   const { login } = useAuth();
@@ -79,15 +101,25 @@ export default function LoginPage() {
                 <Label htmlFor="password" className="text-gray-700 font-medium">Kata Sandi</Label>
                 <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium">Lupa sandi?</a>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Masukkan Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-white border-gray-300 focus-visible:ring-blue-600 h-11"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Masukkan Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-white border-gray-300 focus-visible:ring-blue-600 h-11 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base mt-4 cursor-pointer" disabled={isSubmitting}>
               {isSubmitting ? 'Memproses...' : 'Login'}
@@ -97,60 +129,67 @@ export default function LoginPage() {
 
 
           <p className="text-center text-sm text-gray-600 mt-8">
-            Demo account: <span className="font-semibold text-gray-800">admin@sislantol.com</span> / <span className="font-semibold text-gray-800">password</span>
+            Demo account: <span className="font-semibold text-gray-800">admin@sislantol.com</span> / <span className="font-semibold text-gray-800">admin123</span>
           </p>
         </div>
       </div>
 
       {/* Right side - Image & Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#3b5998] p-12 flex-col justify-center relative overflow-hidden">
-        {/* Background Grid Pattern */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-        </div>
+      <div className="hidden lg:flex lg:w-1/2 p-6 xl:p-8 bg-white">
+        <div className="w-full h-full bg-[#3b5998] rounded-[2rem] p-12 flex flex-col justify-center relative overflow-hidden shadow-2xl">
+          {/* Background Grid Pattern */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{ backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+          </div>
 
-        <div className="max-w-2xl w-full z-10 text-white mb-10 pl-4">
-          <h2 className="text-4xl font-semibold mb-4 leading-tight">Pantau Lalu Lintas Tol<br />dengan Percaya Diri</h2>
-          <p className="text-blue-100 text-lg opacity-90 max-w-xl">
-            Dari pemantauan armada hingga penanganan insiden darurat — Sislantol menyederhanakan setiap detail operasional Anda.
-          </p>
-        </div>
+          <div className="max-w-2xl w-full z-10 text-white mb-10 pl-4">
+            <h2 className="text-4xl font-semibold mb-4 leading-tight">Pantau Lalu Lintas Tol<br />dengan Percaya Diri</h2>
+            <p className="text-blue-100 text-lg opacity-90 max-w-xl">
+              Dari pemantauan armada hingga penanganan insiden darurat — Sislantol menyederhanakan setiap detail operasional Anda.
+            </p>
+          </div>
 
-        <div className="relative w-full max-w-2xl aspect-video rounded-xl shadow-2xl overflow-hidden z-10 bg-blue-800/50 mx-auto border border-white/10">
-          {CAROUSEL_IMAGES.map((src, idx) => (
-            <div
-              key={src}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentImageIdx ? 'opacity-100' : 'opacity-0'}`}
-            >
-              <img
-                src={src}
-                alt="Dashboard preview"
-                className="w-full h-full object-cover object-top"
+          <div className="relative w-full max-w-2xl aspect-video rounded-xl shadow-2xl overflow-hidden z-10 bg-blue-800/50 mx-auto border border-white/10">
+            {CAROUSEL_IMAGES.map((src, idx) => (
+              <div
+                key={src}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === currentImageIdx ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <img
+                  src={src}
+                  alt="Dashboard preview"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Carousel Indicators */}
+          <div className="flex gap-2 mt-8 z-10 pl-4">
+            {CAROUSEL_IMAGES.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentImageIdx(idx)}
+                className={`h-1.5 rounded-full transition-all ${idx === currentImageIdx ? 'w-8 bg-white' : 'w-4 bg-white/40'}`}
+                aria-label={`Go to slide ${idx + 1}`}
               />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Carousel Indicators */}
-        <div className="flex gap-2 mt-8 z-10 pl-4">
-          {CAROUSEL_IMAGES.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentImageIdx(idx)}
-              className={`h-1.5 rounded-full transition-all ${idx === currentImageIdx ? 'w-8 bg-white' : 'w-4 bg-white/40'}`}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
-        </div>
-
-        {/* Quote */}
-        <div className="max-w-xl w-full z-10 text-white mt-12 text-sm pl-4">
-          <p className="opacity-90">
-            "Sislantol mempercepat respon petugas derek dan medis. Sangat membantu!"
-          </p>
-          <p className="mt-2 font-medium opacity-100">
-            — Budi Santoso, Kepala Shift Operasional
-          </p>
+          {/* Quote - synced with carousel */}
+          <div className="max-w-xl w-full z-10 text-white mt-12 text-sm pl-4 relative min-h-[64px]">
+            {CAROUSEL_QUOTES.map((quote, idx) => (
+              <div
+                key={idx}
+                className={`transition-opacity duration-700 ease-in-out ${
+                  idx === currentImageIdx ? 'opacity-100' : 'opacity-0 absolute inset-0'
+                }`}
+              >
+                <p className="opacity-90">&ldquo;{quote.text}&rdquo;</p>
+                <p className="mt-2 font-medium opacity-100">— {quote.author}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
