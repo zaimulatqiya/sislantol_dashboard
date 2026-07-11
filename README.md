@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🖥️ Sislantol Dashboard
 
-## Getting Started
+Dashboard admin berbasis **Next.js** untuk sistem pengelolaan lalu lintas online (Sislantol).
 
-First, run the development server:
+---
 
+## ⚙️ Versi yang Harus Diinstall (Wajib Sama!)
+
+| Software | Versi | Link Download |
+|---|---|---|
+| **Node.js** | `v24.12.0` | https://nodejs.org/en/download/releases |
+| **npm** | `11.7.0` *(otomatis dengan Node.js)* | - |
+| **Git** | `2.52.0` atau lebih baru | https://git-scm.com/downloads |
+
+> ⚠️ **PENTING**: Gunakan **Node.js v24.12.0** agar tidak ada masalah kompatibilitas.
+
+---
+
+## 🚀 Cara Setup Project (Pertama Kali)
+
+### 1. Clone Repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/zaimulatqiya/sislantol_dashboard.git
+cd sislantol_dashboard
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Buat File `.env`
+Buat file `.env` di root folder, isi dengan:
+```env
+NEXT_PUBLIC_SUPABASE_URL=isi_dari_pemilik_project
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=isi_dari_pemilik_project
+NEXT_PUBLIC_SUPABASE_ANON_KEY=isi_dari_pemilik_project
+SUPABASE_SERVICE_ROLE_KEY=isi_dari_pemilik_project
+```
+> 📩 Minta file `.env` langsung ke pemilik project secara private (jangan share di chat publik).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Jalankan Project
+```bash
+npm run dev
+```
+Buka browser → http://localhost:3000
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Versi Dependency Utama
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Package | Versi |
+|---|---|
+| Next.js | `16.2.4` |
+| React | `19.2.4` |
+| TypeScript | `^5` |
+| Tailwind CSS | `^4` |
+| Supabase JS | `^2.106.2` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🛠️ Cek Versi Node.js di Komputer
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Buka terminal/PowerShell, ketik:
+```bash
+node --version
+# Harus tampil: v24.12.0
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm --version
+# Harus tampil: 11.7.0
+```
+
+Jika versi berbeda, download Node.js v24.12.0 dari:
+👉 https://nodejs.org/en/download/releases
