@@ -10,7 +10,7 @@ import { Eye, Search, Trash2, RefreshCw } from 'lucide-react';
 import { LaporanDetailSheet } from '../laporan/LaporanDetailSheet';
 import { useRealtimeLaporan } from '@/hooks/useRealtimeLaporan';
 import { supabase } from '@/lib/supabase';
-import { getDisplayJenisKejadian } from '@/lib/utils';
+import { getDisplayJenisKejadian, formatDuration } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import {
   AlertDialog,
@@ -119,6 +119,36 @@ export default function RiwayatPage() {
       } 
     },
     { header: 'Status', cell: (item: any) => <BadgeStatus status={item.status} /> },
+    { 
+      header: 'Waktu Tempuh', 
+      cell: (item: any) => {
+        if (item.penugasan && item.penugasan.length > 0) {
+          const p = item.penugasan[item.penugasan.length - 1];
+          return formatDuration(p.menuju_lokasi_at, p.tiba_lokasi_at);
+        }
+        return '-';
+      } 
+    },
+    { 
+      header: 'Wkt Penanganan', 
+      cell: (item: any) => {
+        if (item.penugasan && item.penugasan.length > 0) {
+          const p = item.penugasan[item.penugasan.length - 1];
+          return formatDuration(p.proses_at, p.selesai_at);
+        }
+        return '-';
+      } 
+    },
+    { 
+      header: 'Total Waktu', 
+      cell: (item: any) => {
+        if (item.penugasan && item.penugasan.length > 0) {
+          const p = item.penugasan[item.penugasan.length - 1];
+          return formatDuration(p.menuju_lokasi_at, p.selesai_at);
+        }
+        return '-';
+      } 
+    },
     { 
       header: 'Aksi', 
       cell: (item: any) => (

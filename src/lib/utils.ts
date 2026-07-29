@@ -28,3 +28,21 @@ export function getDisplayDeskripsi(jenisKejadian: string, deskripsi: string): s
   }
   return deskripsi || '';
 }
+
+export function formatDuration(start: string | undefined | null, end: string | undefined | null): string {
+  if (!start || !end) return '-';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const diffMs = endDate.getTime() - startDate.getTime();
+  
+  if (diffMs < 0 || isNaN(diffMs)) return '-';
+  
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 60) {
+    return `${diffMins} menit`;
+  } else {
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return mins > 0 ? `${hours} jam ${mins} menit` : `${hours} jam`;
+  }
+}

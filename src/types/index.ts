@@ -80,5 +80,15 @@ export interface Penugasan {
   petugasId: string;
   armadaId: string;
   waktuDitugaskan: string;
+  foto_bukti_url?: string;
+  catatan_penutup?: string;
+  created_at: string;
+  selesai_at?: string;
+  menuju_lokasi_at?: string;
+  tiba_lokasi_at?: string;
+  proses_at?: string;
+  petugas?: {
+    nama: string;
+  };
   status: 'aktif' | 'selesai';
 }
