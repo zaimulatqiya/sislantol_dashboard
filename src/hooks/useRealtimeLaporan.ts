@@ -10,6 +10,7 @@ interface Laporan {
   user_id: string | null;
   pelapor_nama: string;
   pelapor_no_hp: string;
+  nomor_polisi: string | null;
   jenis_kejadian: 'mogok' | 'kecelakaan' | 'hambatan' | 'lainnya';
   lokasi: string;
   deskripsi: string;

@@ -245,9 +245,13 @@ export function LaporanDetailSheet({ laporanId, open, onOpenChange, onSuccess }:
                         </div>
                         <div className="font-medium text-gray-900">{laporan.lokasi}</div>
                       </div>
-                      <div className="sm:col-span-2">
+                      <div className="sm:col-span-1">
                         <div className="text-sm text-gray-500 mb-1">Jenis Kejadian</div>
                         <div className="font-medium text-gray-900 capitalize px-3 py-1 bg-gray-100 inline-block rounded-md">{getDisplayJenisKejadian(laporan.jenis_kejadian, laporan.deskripsi)}</div>
+                      </div>
+                      <div className="sm:col-span-1">
+                        <div className="text-sm text-gray-500 mb-1">Nomor Polisi</div>
+                        <div className="font-medium text-gray-900 px-3 py-1 bg-yellow-100 text-yellow-800 inline-block rounded-md border border-yellow-200 uppercase tracking-widest">{laporan.nomor_polisi || '-'}</div>
                       </div>
                       <div className="sm:col-span-2">
                         <div className="text-sm text-gray-500 mb-1">Deskripsi</div>

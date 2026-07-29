@@ -48,6 +48,7 @@ export interface Laporan {
   pelaporNama: string;
   pelaporNoHp: string;
   jenisKejadian: 'mogok' | 'kecelakaan' | 'hambatan' | 'lainnya';
+  nomor_polisi?: string | null;
   lokasi: string;
   deskripsi: string;
   status: StatusLaporan;

@@ -34,7 +34,8 @@ export default function LaporanPage() {
       return false;
     }
 
-    const matchSearch = item.pelapor_nama.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = item.pelapor_nama.toLowerCase().includes(search.toLowerCase()) ||
+                        (item.nomor_polisi?.toLowerCase() || '').includes(search.toLowerCase());
     const matchStatus = statusFilter === 'semua' || item.status === statusFilter;
     const matchJenis = jenisFilter === 'semua' || item.jenis_kejadian === jenisFilter;
     return matchSearch && matchStatus && matchJenis;
@@ -56,6 +57,7 @@ export default function LaporanPage() {
       }) 
     },
     { header: 'Pelapor', accessorKey: 'pelapor_nama' as any },
+    { header: 'No. Polisi', cell: (item: any) => item.nomor_polisi || '-' },
     { header: 'Jenis Kejadian', cell: (item: any) => <span className="capitalize">{getDisplayJenisKejadian(item.jenis_kejadian, item.deskripsi)}</span> },
     { header: 'Lokasi', accessorKey: 'lokasi' as any },
     { header: 'Status', cell: (item: any) => <BadgeStatus status={item.status} /> },
