@@ -15,6 +15,6 @@ export const landingData = {
     previewImageAlt: "Dashboard Preview",
   },
   footer: {
-    copyrightText: "© 2025 PT Jasamarga Transjawa Tol. Hak Cipta Dilindungi.",
+    copyrightText: "Studi kasus: Ruas Tol Surabaya-Gempol (PT Jasamarga Transjawa Tol) - © 2026 Proyek Tugas Akhir Skripsi",
   }
 };
